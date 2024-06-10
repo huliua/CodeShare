@@ -9,7 +9,7 @@ const fileTree = ref([]);
 const parentNode = ref(null);
 
 // 当前文件对应的代码内容以及编程语言
-const codeEditorVisible = ref(false);
+const codeEditorVisible = ref(true);
 const codes = ref('');
 const lang = ref('');
 
@@ -28,6 +28,9 @@ const formLabelWidth = '100px';
 const formRef = ref(null);
 const dialogFormVisible = ref(false);
 const dialogFormTitle = ref("新增");
+
+// 更多设置
+const moreSettingForm = ref({});
 
 /**
  * 选中文件/文件夹
@@ -195,6 +198,38 @@ function handleCodeChange(content) {
         <!-- 文件预览 -->
         <el-col :span="codeEditorVisible ? 14 : 0" class="code-editor">
             <CodeEditor v-show="codeEditorVisible" :code="codes" :lang="lang" @change="handleCodeChange" />
+        </el-col>
+    </el-row>
+
+    <!-- 代码基本信息 -->
+    <el-collapse>
+        <el-collapse-item title="基本信息">
+            <el-form :model="moreSettingForm" label-width="120px" :inline="true">
+                <el-form-item label="标题">
+                    <el-input v-model="moreSettingForm.title" autocomplete="off" />
+                </el-form-item>
+                <el-form-item label="描述">
+                    <el-input v-model="moreSettingForm.description" autocomplete="off" />
+                </el-form-item>
+                <el-form-item label="标签">
+                    <el-select v-model="moreSettingForm.tags" multiple filterable allow-create default-first-option placeholder="请选择标签">
+                        <el-option v-for="item in moreSettingForm.tagOptions" :key="item" :label="item" :value="item" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="封面">
+                    <el-input v-model="moreSettingForm.cover" autocomplete="off" />
+                </el-form-item>
+                <el-form-item label="分类">
+                    <el-select v-model="moreSettingForm.category" placeholder="请选择分类">
+                        <el-option v-for="item in moreSettingForm.categoryOptions" :key="item" :label="item" :value="item" />
+                    </el-select>
+                </el-form-item>
+            </el-form>
+        </el-collapse-item>
+    </el-collapse>
+    <el-row>
+        <el-col>
+
         </el-col>
     </el-row>
 

@@ -148,10 +148,10 @@ defineExpose({
                 </el-col>
             </el-row>
         </el-col>
-        <el-col :span="24" style="height:calc(100% - 40px);">
+        <el-col :span="24" style="height:calc(100% - 40px);overflow: scroll;">
             <el-row style="height: 100%;">
                 <el-col :span="24">
-                    <Codemirror v-model="content" :spellcheck="true" :autofocus="true" :indent-with-tab="true" :tabSize="4" :extensions="extensions" :style="{ 'height': 'calc(100vh - 200px)' }" />
+                    <Codemirror v-model="content" :spellcheck="true" :autofocus="true" :indent-with-tab="true" :tabSize="4" :extensions="extensions" :style="{ 'height': '100%' }" />
                 </el-col>
             </el-row>
         </el-col>

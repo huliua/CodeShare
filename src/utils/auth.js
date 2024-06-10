@@ -24,3 +24,8 @@ export function getRefreshToken() {
 export function removeRefreshToken() {
   return localStorage.removeItem(RefreshKey);
 }
+
+export function clearToken() {
+  removeToken();
+  removeRefreshToken();
+}

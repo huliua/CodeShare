@@ -4,8 +4,7 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: var(--el-bg-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -14,12 +13,11 @@
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
+  color: var(--el-text-color-regular);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--el-color-primary);
 }
 
 body {
@@ -28,6 +26,7 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--el-bg-color);
 }
 
 h1 {
@@ -46,9 +45,7 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
-  border-color: #646cff;
-}
+
 .card {
   padding: 2em;
 }
@@ -57,9 +54,6 @@ button:hover {
   :root {
     color: #213547;
     background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
   }
   button {
     background-color: #f9f9f9;
@@ -70,6 +64,5 @@ button:hover {
   height: 100vh;
   width: 100%;
   position: relative;
-  overflow: hidden;
   font-weight: normal;
 }

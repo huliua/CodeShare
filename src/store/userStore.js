@@ -1,4 +1,7 @@
 import { defineStore } from 'pinia';
+import { clearToken } from '@/utils/auth';
+import { logout } from '@/api/auth';
+
 export const useUserStore = defineStore('user', {
     state: () => {
         return {
@@ -16,10 +19,25 @@ export const useUserStore = defineStore('user', {
             this.userInfo = user;
         },
         clearUser() {
-            this.user = null;
             this.roles = [];
             this.permissions = [];
-            this.clearToken();
+            this.userInfo = null;
+            clearToken();
+        },
+        logout() {
+            return new Promise((resolve) => {
+                logout().then(() => {
+                    ElNotification({
+                        title: 'Success',
+                        message: '退出成功',
+                        type: 'success'
+                    });
+                    this.clearUser();
+                    resolve();
+                }).catch(() => {
+                    reject();
+                });
+            });
         }
     }
 });

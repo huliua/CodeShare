@@ -1,5 +1,9 @@
 import request from '@/utils/request';
 
+/**
+ * 登录
+ * @param {Object} param 登录表单信息
+ */
 export function login(param) {
     return request({
         url: '/auth/login',
@@ -8,6 +12,19 @@ export function login(param) {
         },
         method: 'post',
         data: param
+    });
+}
+
+/**
+ * 登出
+ */
+export function logout() {
+    return request({
+        url: '/auth/logout',
+        headers: {
+            needToken: true,
+        },
+        method: 'post'
     });
 }
 
