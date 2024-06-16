@@ -127,9 +127,10 @@ const getValue = () => {
 };
 
 // 触发文本内容变更事件
-const emit = defineEmits(["change"]);
+const emits = defineEmits(["change", "update:code"]);
 watch(content, () => {
-    emit("change", content.value);
+    emits("change", content.value);
+    emits('update:code', content.value);
 });
 
 // 暴露方法，外部引用

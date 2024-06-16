@@ -3,6 +3,7 @@ import { nextTick } from 'vue';
 import CodeEditor from '@/components/CodeEditor/index.vue';
 import { Folder, Document, CirclePlus, Remove } from '@element-plus/icons-vue';
 import { getUuid } from '@/utils/commonUtils';
+import { saveCodes } from '@/api/codeShare';
 // 文件目录树形结构
 const treeRef = ref(null);
 const fileTree = ref([]);
@@ -18,7 +19,7 @@ const form = ref({});
 const rules = ref({
     name: [
         { required: true, message: '请输入文件/文件夹名称', trigger: 'blur' },
-        { min: 1, max: 15, message: '文件/文件夹名称长度为1-15', trigger: 'blur' },
+        { min: 1, max: 25, message: '文件/文件夹名称长度为1-25', trigger: 'blur' },
     ],
     type: [
         { required: true, message: '请输入文件/文件夹名称', trigger: 'blur' }
@@ -30,7 +31,28 @@ const dialogFormVisible = ref(false);
 const dialogFormTitle = ref("新增");
 
 // 更多设置
+const moreSettingFormRef = ref(null);
 const moreSettingForm = ref({});
+const moreSettingFormRules = ref({
+    title: [
+        { required: true, message: '请输入标题', trigger: 'blur' },
+        { min: 1, max: 20, message: '标题长度为1-20', trigger: 'blur' },
+    ],
+    visibility: [
+        { required: true, message: '请选择可见性', trigger: 'blur' }
+    ],
+    password: [
+        { min: 1, max: 15, message: '密码长度为1-15', trigger: 'blur' },
+        { required: true, message: '请输入密码', trigger: 'blur' }
+    ]
+});
+const tagOptions = ref([{
+    value: 'java',
+    label: 'JAVA'
+}, {
+    value: 'javascript',
+    label: 'JavaScript'
+}]);
 
 /**
  * 选中文件/文件夹
@@ -87,11 +109,6 @@ function doSelect(data) {
         lang.value = '';
         codeEditorVisible.value = false;
     }
-}
-
-/**
- * 添加一个新节点到文件树中。
- * @param {Object
 }
 
 /**
@@ -156,6 +173,71 @@ function handleCodeChange(content) {
         selectedNode.content = content;
     }
 }
+
+/**
+ * 提交表单
+ */
+function submitForm() {
+    moreSettingFormRef.value.validate((valid) => {
+        if (!valid) {
+            return false;
+        }
+
+        const param = {};
+        // 基本信息
+        param.codeShareInfo = moreSettingForm.value;
+
+        // 文件信息
+        const fileList = [];
+        deepBuildTreeFile(fileList, fileTree.value);
+        param.codeShareFileList = fileList;
+
+        // 标签信息
+        const tags = [];
+        tagOptions.value.forEach((tag) => {
+            if (moreSettingForm.value.tags.includes(tag.value)) {
+                tags.push({
+                    tagCode: tag.value,
+                    tagName: tag.label
+                });
+            }
+        });
+        param.tagList = tags;
+
+        // 保存代码
+        saveCodes(param).then((res) => {
+            ElMessage({
+                message: '保存成功',
+                type: 'success',
+            });
+            // 重置表单
+            resetForm();
+        });
+    });
+}
+
+/**
+ * 重置表单
+ */
+function resetForm() {
+    moreSettingFormRef.value.resetFields();
+}
+
+function deepBuildTreeFile(fileList, treeFileList, parentId = null) {
+    treeFileList.forEach((file) => {
+        const treeFile = {
+            id: file.id,
+            name: file.name,
+            parentId: parentId || '',
+            type: file.type,
+            content: file.content
+        };
+        fileList.push(treeFile);
+        if (file.children && file.children.length > 0) {
+            deepBuildTreeFile(fileList, file.children, file.id);
+        }
+    });
+}
 </script>
 
 <template>
@@ -197,41 +279,57 @@ function handleCodeChange(content) {
 
         <!-- 文件预览 -->
         <el-col :span="codeEditorVisible ? 14 : 0" class="code-editor">
-            <CodeEditor v-show="codeEditorVisible" :code="codes" :lang="lang" @change="handleCodeChange" />
+            <CodeEditor v-show="codeEditorVisible" v-model:code="codes" :lang="lang" @change="handleCodeChange" />
         </el-col>
     </el-row>
 
     <!-- 代码基本信息 -->
-    <el-collapse>
-        <el-collapse-item title="基本信息">
-            <el-form :model="moreSettingForm" label-width="120px" :inline="true">
-                <el-form-item label="标题">
-                    <el-input v-model="moreSettingForm.title" autocomplete="off" />
+    <el-collapse :model-value="['baseInfo']">
+        <el-collapse-item title="基本信息" name="baseInfo">
+            <el-form :model="moreSettingForm" ref="moreSettingFormRef" :rules="moreSettingFormRules" label-width="100px" :inline="false" :size="'default'">
+                <el-form-item label="标题" prop="title">
+                    <el-input v-model="moreSettingForm.title" autocomplete="off" placeholder="请输入标题" />
                 </el-form-item>
-                <el-form-item label="描述">
-                    <el-input v-model="moreSettingForm.description" autocomplete="off" />
+                <el-form-item label="描述" prop="description">
+                    <el-input type="textarea" v-model="moreSettingForm.description" autocomplete="off" placeholder="请输入描述" />
                 </el-form-item>
-                <el-form-item label="标签">
-                    <el-select v-model="moreSettingForm.tags" multiple filterable allow-create default-first-option placeholder="请选择标签">
-                        <el-option v-for="item in moreSettingForm.tagOptions" :key="item" :label="item" :value="item" />
+                <el-form-item label="可见性" prop="visibility">
+                    <el-select v-model="moreSettingForm.visibility" placeholder="请选择可见性" clearable>
+                        <template #label="{ label, value }">
+                            <span>{{ label }}: </span>
+                            <span style="font-weight: bold">{{ value }}</span>
+                        </template>
+                        <el-option label="公开" value="public" selected />
+                        <el-option label="私密" value="private" />
+                        <el-option label="加密" value="cryptographic" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="封面">
-                    <el-input v-model="moreSettingForm.cover" autocomplete="off" />
+                <el-form-item label="密码" prop="password" v-if="moreSettingForm.visibility === 'cryptographic'">
+                    <el-input v-model="moreSettingForm.password" type="password" show-password autocomplete="off" placeholder="请输入密码" />
                 </el-form-item>
-                <el-form-item label="分类">
-                    <el-select v-model="moreSettingForm.category" placeholder="请选择分类">
-                        <el-option v-for="item in moreSettingForm.categoryOptions" :key="item" :label="item" :value="item" />
+                <el-form-item label="标签" prop="tags">
+                    <el-select v-model="moreSettingForm.tags" multiple filterable clearable allow-create default-first-option placeholder="请选择标签">
+                        <el-option v-for="item in tagOptions" :key="item.value" :label="item.label" :value="item.value" />
                     </el-select>
+                </el-form-item>
+                <el-form-item label="封面" prop="cover">
+                    <el-input v-model="moreSettingForm.cover" autocomplete="off" placeholder="请输入封面链接">
+                        <template #prepend>http(s)://</template>
+                    </el-input>
                 </el-form-item>
             </el-form>
+            <el-row justify="end">
+                <el-col style="text-align: right;">
+                    <el-button type="primary" @click="submitForm">
+                        发布
+                    </el-button>
+                    <el-button @click="resetForm">
+                        重置
+                    </el-button>
+                </el-col>
+            </el-row>
         </el-collapse-item>
     </el-collapse>
-    <el-row>
-        <el-col>
-
-        </el-col>
-    </el-row>
 
     <!-- 添加文件/文件夹弹窗 -->
     <el-dialog v-model="dialogFormVisible" :title="dialogFormTitle" width="500">
@@ -260,6 +358,7 @@ function handleCodeChange(content) {
 <style scoped>
 .main-content {
     height: calc(100vh - 160px);
+    min-height: 400px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
