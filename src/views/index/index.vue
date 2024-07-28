@@ -131,8 +131,13 @@ function logoutAction() {
           </el-col>
         </el-row>
       </el-header>
-      <el-main>
-        <router-view></router-view>
+      <el-main class="main">
+        <router-view v-slot="{ Component, route }">
+          <keep-alive v-if="route.meta.keepAlive">
+            <component :is="Component" />
+          </keep-alive>
+          <component v-else :is="Component" />
+        </router-view>
       </el-main>
       <el-footer>
         <el-row class="footer" @click="router.push('/index')">
@@ -158,6 +163,10 @@ function logoutAction() {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.main {
+  min-height: calc(100vh - 120px);
 }
 
 .avatar {

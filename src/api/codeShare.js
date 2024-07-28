@@ -29,15 +29,57 @@ export function deleteCodes(param) {
 }
 
 /**
- * 查询代码
+ * 查看代码库
  */
-export function getCodes(param) {
+export function getCodesList(param) {
     return request({
-        url: '/codeShare/getCodes',
+        url: '/codeShare/getCodesList',
         headers: {
             needToken: true,
         },
         method: 'post',
         data: param
+    });
+}
+
+/**
+ * 查询我的代码
+ */
+export function getMyCodesList(param) {
+    return request({
+        url: '/codeShare/getMyCodesList',
+        headers: {
+            needToken: true,
+        },
+        method: 'post',
+        data: param
+    });
+}
+
+/**
+ * 获取我的收藏代码
+ */
+export function getMyFavourList(param) {
+    return request({
+        url: '/codeShare/getMyFavourList',
+        headers: {
+            needToken: true,
+        },
+        method: 'post',
+        data: param
+    });
+}
+
+/**
+ * 收藏/取消收藏代码
+ */
+export function favourCode(params) {
+    return request({
+        url: '/codeShare/favourCode',
+        headers: {
+            needToken: true,
+        },
+        method: 'post',
+        data: params
     });
 }
