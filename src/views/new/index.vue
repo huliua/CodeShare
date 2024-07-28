@@ -194,13 +194,12 @@ function submitForm() {
 
         // 标签信息
         const tags = [];
-        tagOptions.value.forEach((tag) => {
-            if (moreSettingForm.value.tags.includes(tag.value)) {
-                tags.push({
-                    tagCode: tag.value,
-                    tagName: tag.label
-                });
-            }
+        var selected = moreSettingForm.value.tags || [];
+        selected.forEach((tag) => {
+            tags.push({
+                tagCode: tagOptions.value.find((item) => item.value === tag)?.value || '',
+                tagName: tagOptions.value.find((item) => item.value === tag)?.label || tag
+            });
         });
         param.tagList = tags;
 
@@ -212,6 +211,9 @@ function submitForm() {
             });
             // 重置表单
             resetForm();
+
+            // 跳转到我的代码页面
+            router.push({ path: '/my' });
         });
     });
 }

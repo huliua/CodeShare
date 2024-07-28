@@ -1,6 +1,6 @@
 <script setup>
 import { Search, Refresh, Star, StarFilled } from '@element-plus/icons-vue';
-import { getMyFavourList, favourCode } from '@/api/codeShare';
+import { getMyCodesList, favourCode } from '@/api/codeShare';
 import { useRouter } from 'vue-router';
 import { onActivated } from 'vue';
 const router = useRouter();
@@ -42,7 +42,7 @@ const resetQuery = function () {
  */
 const getDataList = function () {
   loading.value = true;
-  getMyFavourList({
+  getMyCodesList({
     pageSize: pageSize.value,
     pageNum: pageNum.value,
     ...queryParams.value
@@ -62,7 +62,6 @@ const changeFavo = function (item) {
     operateType: item.hasStared ? 'undo_favorite' : 'favorite'
   }).then(() => {
     item.hasStared = !item.hasStared;
-    getDataList();
     ElMessage.success(item.hasStared ? '收藏成功' : '取消成功');
   });
 };
@@ -142,7 +141,8 @@ onActivated(() => {
         </div>
         <div class="card-bottom" v-show="getIsHover(item)">
           <div class="button-group">
-            <el-button link @click="changeFavo(item)" style="font-size: 16px;">
+            <el-button link v-show="!item.hasStared" :icon="Star" @click="changeFavo(item)"></el-button>
+            <el-button link v-show="item.hasStared" @click="changeFavo(item)" style="font-size: 16px;">
               <template #icon>
                 <el-icon>
                   <StarFilled color="gold" />
