@@ -14,75 +14,83 @@ const constantRoutes = [
             title: '首页-CodeShare',
             permission: []
         },
-        children: [{
-            name: 'index',
-            path: '/index',
-            component: () => import("@/views/new/index.vue"),
-            meta: {
-                keepAlive: true,
-                title: '新建-CodeShare',
-                permission: []
+        children: [
+            {
+                name: 'index',
+                path: '/index',
+                component: () => import('@/views/new/index.vue'),
+                meta: {
+                    keepAlive: true,
+                    title: '新建-CodeShare',
+                    permission: []
+                }
+            },
+            {
+                name: 'list',
+                path: '/list',
+                component: () => import('@/views/list/index.vue'),
+                meta: {
+                    needRecordIsBack: true,
+                    isBack: false,
+                    keepAlive: true,
+                    title: '代码库-CodeShare',
+                    permission: []
+                }
+            },
+            {
+                name: 'my',
+                path: '/my',
+                component: () => import('@/views/myCode/index.vue'),
+                meta: {
+                    needRecordIsBack: true,
+                    isBack: false,
+                    keepAlive: true,
+                    title: '我的代码-CodeShare',
+                    permission: []
+                }
+            },
+            {
+                name: 'favour',
+                path: '/favour',
+                component: () => import('@/views/favour/index.vue'),
+                meta: {
+                    needRecordIsBack: true,
+                    isBack: false,
+                    keepAlive: true,
+                    title: '我的收藏-CodeShare',
+                    permission: []
+                }
+            },
+            {
+                name: 'user',
+                path: '/user',
+                component: () => import('@/views/user/index.vue'),
+                meta: {
+                    title: '个人中心-CodeShare',
+                    permission: []
+                }
+            },
+            {
+                name: 'detail',
+                path: '/detail/:id',
+                component: () => import('@/views/detail/detail.vue'),
+                meta: {
+                    keepAlive: true,
+                    title: '详情',
+                    permission: []
+                }
+            },
+            {
+                name: 'edit',
+                path: '/edit/:id',
+                component: () => import('@/views/detail/detail.vue'),
+                meta: {
+                    keepAlive: true,
+                    title: '编辑',
+                    permission: []
+                }
             }
-        }, {
-            name: 'list',
-            path: '/list',
-            component: () => import("@/views/list/index.vue"),
-            meta: {
-                needRecordIsBack: true,
-                isBack: false,
-                keepAlive: true,
-                title: '代码库-CodeShare',
-                permission: []
-            }
-        }, {
-            name: 'my',
-            path: '/my',
-            component: () => import("@/views/myCode/index.vue"),
-            meta: {
-                needRecordIsBack: true,
-                isBack: false,
-                keepAlive: true,
-                title: '我的代码-CodeShare',
-                permission: []
-            }
-        }, {
-            name: 'favour',
-            path: '/favour',
-            component: () => import("@/views/favour/index.vue"),
-            meta: {
-                needRecordIsBack: true,
-                isBack: false,
-                keepAlive: true,
-                title: '我的收藏-CodeShare',
-                permission: []
-            }
-        }, {
-            name: 'user',
-            path: '/user',
-            component: () => import("@/views/user/index.vue"),
-            meta: {
-                title: '个人中心-CodeShare',
-                permission: []
-            }
-        }, {
-            name: 'detail',
-            path: '/detail/:id',
-            component: () => import("@/views/detail/detail.vue"),
-            meta: {
-                keepAlive: true,
-                title: '详情',
-                permission: []
-            }
-        }, {
-            name: 'edit',
-            path: '/edit/:id',
-            component: () => import("@/views/detail/detail.vue"),
-            meta: {
-                keepAlive: true,
-                title: '编辑',
-                permission: []
-            }
-        }]
+        ]
     },
     {
         name: 'login',
@@ -119,22 +127,25 @@ router.beforeEach((to, from, next) => {
         from.meta.isBack = false;
     }
     // 判断是否登录
-    if (to.path != "/login" && useUserStore().userInfo === null) {
+    if (to.path != '/login' && useUserStore().userInfo === null) {
         // 先获取用户信息
         isRelogin.show = true;
-        getUserInfo().then(res => {
-            useUserStore().saveUser(res.data);
-            next();
-        }).catch(err => {
-            next({
-                path: '/login',
-                query: {
-                    redirectUrl: to.fullPath
-                }
+        getUserInfo()
+            .then(res => {
+                useUserStore().saveUser(res.data);
+                next();
+            })
+            .catch(err => {
+                next({
+                    path: '/login',
+                    query: {
+                        redirectUrl: to.fullPath
+                    }
+                });
+            })
+            .finally(() => {
+                isRelogin.show = false;
             });
-        }).finally(() => {
-            isRelogin.show = false;
-        });
         return;
     }
     next();

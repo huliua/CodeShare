@@ -1,7 +1,23 @@
-# Vue 3 + Vite
+# 代码分享平台 `CodeShare`
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+本项目为优质代码分享平台。在这里，你可以上传、分享代码片段，使之成为你的代码知识库！
 
-## Recommended IDE Setup
+# 技术选型
 
-- [VS Code](https://code.visualstudio.com/) + [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (previously Volar) and disable Vetur
+## 前端
+
+- Vue3
+- Vite
+- Pina
+- Axios
+- ElementUI-Plus
+
+## 后端
+
+- SpringCloud
+- Sa-Token 权限控制
+- GateWay 网关
+- Sentinel 限流、熔断降级
+- Nacos 注册中心、配置中心
+- Redis 缓存
+- RocketMq 消息中间件(规划中)

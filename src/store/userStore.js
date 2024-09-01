@@ -24,19 +24,24 @@ export const useUserStore = defineStore('user', {
             this.userInfo = null;
             clearToken();
         },
+        updateUser(user) {
+            this.userInfo = user;
+        },
         logout() {
-            return new Promise((resolve) => {
-                logout().then(() => {
-                    ElNotification({
-                        title: 'Success',
-                        message: '退出成功',
-                        type: 'success'
+            return new Promise(resolve => {
+                logout()
+                    .then(() => {
+                        ElNotification({
+                            title: 'Success',
+                            message: '退出成功',
+                            type: 'success'
+                        });
+                        this.clearUser();
+                        resolve();
+                    })
+                    .catch(() => {
+                        reject();
                     });
-                    this.clearUser();
-                    resolve();
-                }).catch(() => {
-                    reject();
-                });
             });
         }
     }
