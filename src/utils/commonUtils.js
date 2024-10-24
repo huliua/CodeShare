@@ -41,3 +41,11 @@ export function getUuid() {
         return v.toString(16);
     });
 }
+
+/**
+ * TODO 加密
+ */
+export function encrypt(str) {
+    console.log('加密密码......');
+    return str;
+}

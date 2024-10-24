@@ -17,6 +17,7 @@
     const codeEditorVisible = ref(false);
     const codes = ref('');
     const lang = ref('');
+    const currentFileId = ref('');
 
     // 弹窗表单
     const form = ref({});
@@ -57,9 +58,12 @@
      * @param {Object} node - 当前选择的节点的对象。
      */
     function doSelect(data) {
+        // 先把代码编辑器隐藏
+        codeEditorVisible.value = false;
         if (data.type === 'file') {
             // 获取文件内容
             codes.value = data.content || '';
+            currentFileId.value = data.id;
             let fileExtention = data.name.split('.')[1] || '';
             switch (fileExtention) {
                 case 'js':
@@ -105,7 +109,6 @@
         } else {
             codes.value = '';
             lang.value = '';
-            codeEditorVisible.value = false;
         }
     }
 
@@ -195,8 +198,8 @@
             var selected = moreSettingForm.value.tags || [];
             selected.forEach(tag => {
                 tags.push({
-                    code: tagOptions.value.find(item => item.code === tag)?.code || '',
-                    name: tagOptions.value.find(item => item.code === tag)?.name || tag
+                    code: (tagOptions.value || []).find(item => item.code === tag)?.code || '',
+                    name: (tagOptions.value || []).find(item => item.code === tag)?.name || tag
                 });
             });
             param.tagList = tags;
@@ -285,7 +288,7 @@
 
         <!-- 文件预览 -->
         <el-col :span="codeEditorVisible ? 14 : 0" class="code-editor">
-            <CodeEditor v-show="codeEditorVisible" v-model:code="codes" :lang="lang" @change="handleCodeChange" />
+            <CodeEditor v-show="codeEditorVisible" :key="currentFileId" v-model:code="codes" :lang="lang" @change="handleCodeChange" />
         </el-col>
     </el-row>
 

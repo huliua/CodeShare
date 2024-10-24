@@ -116,7 +116,7 @@
                                 <template #dropdown>
                                     <el-dropdown-menu>
                                         <el-dropdown-item v-if="!isDark" :icon="Moon" @click="toggleDark()">黑暗模式</el-dropdown-item>
-                                        <el-dropdown-item v-else="isDark" :icon="Sunny" @click="toggleDark()">明亮模式</el-dropdown-item>
+                                        <el-dropdown-item v-else :icon="Sunny" @click="toggleDark()">明亮模式</el-dropdown-item>
                                         <el-dropdown-item :icon="User" @click="router.push('/user')">个人中心</el-dropdown-item>
                                         <el-dropdown-item :icon="SwitchButton" style="color: red" @click="logout">退出登录</el-dropdown-item>
                                     </el-dropdown-menu>
