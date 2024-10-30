@@ -1,3 +1,6 @@
+import CryptoJS from 'crypto-js';
+import JSEncrypt from 'jsencrypt';
+
 export function isBlank(obj) {
     return typeof obj === 'undefined' || obj == null || (typeof obj === 'string' && obj.trim().length === 0);
 }
@@ -43,9 +46,34 @@ export function getUuid() {
 }
 
 /**
- * TODO 加密
+ * 加密字符串,使用aes加密
  */
-export function encrypt(str) {
-    console.log('加密密码......');
-    return str;
+export function encryptByAes(str) {
+    const secretKey = CryptoJS.enc.Utf8.parse('codeShare-huliua');
+    const iv = CryptoJS.enc.Utf8.parse('codeShare-huliua');
+    const encrypted = CryptoJS.AES.encrypt(str, secretKey, {
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    });
+    return encrypted.toString();
+}
+
+// 生成 RSA 密钥对  
+export function generateKeyPair() {
+    const crypt = new JSEncrypt();
+    const publicKey = crypt.getPublicKey();
+    const privateKey = crypt.getPrivateKey();
+    return { publicKey, privateKey };
+}
+
+/**
+ * 使用rsa加密
+ * @param {string} str 待加密的字符串
+ * @returns 加密后的字符串
+ */
+export function encryptByRsa(str, publicKey) {
+    const crypt = new JSEncrypt();
+    crypt.setPublicKey(publicKey);
+    return crypt.encrypt(str);
 }

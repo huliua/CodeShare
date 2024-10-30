@@ -7,10 +7,11 @@ import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/store/userStore';
 import { login } from '@/api/auth';
 import { setRefreshToken, setToken } from '@/utils/auth';
-import { encrypt } from '@/utils/commonUtils';
+import { encryptByRsa } from '@/utils/commonUtils';
 
 const userStore = useUserStore();
 const appName = ref(import.meta.env.VITE_APP_TITLE);
+const publicKey = ref(import.meta.env.VITE_APP_PUBLIC_KEY);
 const loginForm = ref({
     username: '',
     password: '',
@@ -56,10 +57,12 @@ const handleLogin = function () {
             return;
         }
         loading.value = true;
+        const loginFormData = Object.assign({}, loginForm.value);
+
         // 对登录密码进行加密处理
-        loginForm.value.password = encrypt(loginForm.value.password);
+        loginFormData.password = encryptByRsa(loginFormData.password, atob(publicKey.value));
         // 执行登录
-        login(loginForm.value)
+        login(loginFormData)
             .then(res => {
                 loading.value = false;
                 // 存储用户信息
