@@ -96,7 +96,7 @@ const register = ref(true);
     <div class="login">
         <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
             <h3 class="title">{{ appName }}</h3>
-            <el-form-item prop="userName">
+            <el-form-item prop="username">
                 <el-input v-model="loginForm.username" type="text" size="large" auto-complete="off" placeholder="账号">
                     <template #prefix>
                         <el-icon>
@@ -106,7 +106,7 @@ const register = ref(true);
                 </el-input>
             </el-form-item>
             <el-form-item prop="password">
-                <el-input v-model="loginForm.password" type="password" size="large" auto-complete="off" placeholder="密码" show-password>
+                <el-input v-model="loginForm.password" type="password" size="large" auto-complete="off" placeholder="密码" show-password @keyup.enter="handleLogin">
                     <template #prefix>
                         <el-icon>
                             <Lock />
