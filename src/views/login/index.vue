@@ -61,6 +61,9 @@ const handleLogin = function () {
 
         // 对登录密码进行加密处理
         loginFormData.password = encryptByRsa(loginFormData.password, atob(publicKey.value));
+        if (loginFormData.rememberMe) {
+            loginFormData.rememberMe = "1";
+        }
         // 执行登录
         login(loginFormData)
             .then(res => {
@@ -93,53 +96,62 @@ const handleLogin = function () {
 const register = ref(true);
 </script>
 <template>
-    <div class="login">
-        <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
-            <h3 class="title">{{ appName }}</h3>
-            <el-form-item prop="username">
-                <el-input v-model="loginForm.username" type="text" size="large" auto-complete="off" placeholder="账号">
-                    <template #prefix>
-                        <el-icon>
-                            <User />
-                        </el-icon>
-                    </template>
-                </el-input>
-            </el-form-item>
-            <el-form-item prop="password">
-                <el-input v-model="loginForm.password" type="password" size="large" auto-complete="off" placeholder="密码" show-password @keyup.enter="handleLogin">
-                    <template #prefix>
-                        <el-icon>
-                            <Lock />
-                        </el-icon>
-                    </template>
-                </el-input>
-            </el-form-item>
-            <el-checkbox v-model="loginForm.rememberMe" style="margin: 0px 0px 25px 0px">7天免登录</el-checkbox>
-            <el-form-item style="width: 100%">
-                <el-button :loading="loading" size="large" type="primary" style="width: 100%" @click.prevent="handleLogin">
-                    <span v-if="!loading">登 录</span>
-                    <span v-else>登 录 中...</span>
-                </el-button>
-                <div style="text-align: right; width: 100%" v-if="register">
-                    <router-link class="link-type" :to="'/register'">注册账号</router-link>
-                </div>
-            </el-form-item>
-        </el-form>
-        <!--  底部  -->
-        <div class="el-login-footer">
-            <span>Copyright ©2018-2023 huliua.asia All Rights Reserved.</span>
+    <div class="page-container">
+        <div class="login">
+            <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
+                <h3 class="title">{{ appName }}</h3>
+                <el-form-item prop="username">
+                    <el-input v-model="loginForm.username" type="text" size="large" auto-complete="off" placeholder="账号">
+                        <template #prefix>
+                            <el-icon>
+                                <User />
+                            </el-icon>
+                        </template>
+                    </el-input>
+                </el-form-item>
+                <el-form-item prop="password">
+                    <el-input v-model="loginForm.password" type="password" size="large" auto-complete="off" placeholder="密码" show-password @keyup.enter="handleLogin">
+                        <template #prefix>
+                            <el-icon>
+                                <Lock />
+                            </el-icon>
+                        </template>
+                    </el-input>
+                </el-form-item>
+                <el-checkbox v-model="loginForm.rememberMe" style="margin: 0px 0px 25px 0px">7天免登录</el-checkbox>
+                <el-form-item style="width: 100%">
+                    <el-button :loading="loading" size="large" type="primary" style="width: 100%" @click.prevent="handleLogin">
+                        <span v-if="!loading">登 录</span>
+                        <span v-else>登 录 中...</span>
+                    </el-button>
+                    <div style="text-align: right; width: 100%" v-if="register">
+                        <router-link class="link-type" :to="'/register'">注册账号</router-link>
+                    </div>
+                </el-form-item>
+            </el-form>
         </div>
+        <!--  底部  -->
+        <el-footer>
+            <el-row class="footer" @click="router.push('/index')">
+                <el-col :span="24">Copyright © {{ new Date().getFullYear() }} {{ appName }}. All Rights Reserved.</el-col>
+            </el-row>
+        </el-footer>
     </div>
 </template>
 
 <style scoped lang="scss">
+.page-container {
+    background-image: url('../../assets/images/login-background.jpg');
+    background-size: cover;
+    height: 100vh;
+    overflow: scroll;
+}
+
 .login {
     display: flex;
     align-items: center;
+    min-height: calc(100vh - 60px);
     justify-content: center;
-    height: 100vh;
-    background-image: url('../../assets/images/login-background.jpg');
-    background-size: cover;
 }
 
 .title {

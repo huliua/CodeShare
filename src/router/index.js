@@ -99,6 +99,15 @@ const constantRoutes = [
         meta: {
             title: '登录-CodeShare'
         }
+    },
+    {
+        name: 'register',
+        path: '/register',
+        component: () => import('@/views/register/index.vue'),
+        meta: {
+            title: '注册-CodeShare',
+            permission: []
+        }
     }
 ];
 const router = createRouter({
@@ -125,6 +134,11 @@ router.beforeEach((to, from, next) => {
     // 如果从需要记录isBack的页面跳转到别的页面，就把isBack重置为false
     if (from.meta.needRecordIsBack == true) {
         from.meta.isBack = false;
+    }
+    // 跳转注册页
+    if (to.path == '/register') {
+        next();
+        return;
     }
     // 判断是否登录
     if (to.path != '/login' && useUserStore().userInfo === null) {

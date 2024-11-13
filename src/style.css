@@ -1,10 +1,10 @@
 :root {
+    font-weight: 400;
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
-    font-weight: 400;
+    background-color: var(--el-bg-color);
 
     color-scheme: light dark;
-    background-color: var(--el-bg-color);
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -22,12 +22,12 @@ a:hover {
 }
 
 body {
-    margin: 0;
     display: flex;
-    place-items: center;
     min-width: 320px;
     min-height: 100vh;
+    margin: 0;
     background-color: var(--el-bg-color);
+    place-items: center;
 }
 
 h1 {
@@ -36,13 +36,13 @@ h1 {
 }
 
 button {
-    border-radius: 8px;
-    border: 1px solid transparent;
     padding: 0.6em 1.2em;
-    font-size: 1em;
     font-weight: 500;
+    font-size: 1em;
     font-family: inherit;
     background-color: #1a1a1a;
+    border: 1px solid transparent;
+    border-radius: 8px;
     cursor: pointer;
     transition: border-color 0.25s;
 }
@@ -63,8 +63,20 @@ button {
 }
 
 #app {
-    min-height: 100vh;
-    width: 100%;
     position: relative;
+    width: 100%;
+    min-height: 100vh;
     font-weight: normal;
+}
+
+#app .footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: rgb(192, 196, 204);
+    font-size: 12px;
+    text-align: center;
+    cursor: pointer;
 }

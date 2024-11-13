@@ -1,87 +1,93 @@
 <script setup>
-    import { useUserStore } from '@/store/userStore';
-    import { changePassword, updateUserInfo } from '@/api/user.js';
+import { useUserStore } from '@/store/userStore';
+import { changePassword, updateUserInfo } from '@/api/user.js';
+import { encryptByRsa } from '@/utils/commonUtils';
+const publicKey = ref(import.meta.env.VITE_APP_PUBLIC_KEY);
 
-    const userStore = useUserStore();
-    const userInfoForm = ref({
-        username: userStore.userInfo?.username,
-        nickname: userStore.userInfo?.nickname,
-        phone: userStore.userInfo?.phone,
-        sex: userStore.userInfo?.sex,
-        email: userStore.userInfo?.email,
-        signature: userStore.userInfo?.signature
-    });
-    const userInfoFormRef = ref(null);
-    const changePasswordForm = ref({
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    });
-    const changePasswordFormRef = ref(null);
-    const changePasswordFormRules = ref({
-        oldPassword: [{ required: true, message: '请输入原密码', trigger: 'blur' }],
-        newPassword: [
-            { required: true, message: '请输入新密码', trigger: 'blur' },
-            { min: 6, max: 20, message: '密码长度为6-20', trigger: 'blur' }
-        ],
-        confirmPassword: [
-            { required: true, message: '请再次输入新密码', trigger: 'blur' },
-            {
-                validator: function (rule, value, callback) {
-                    if (value !== changePasswordForm.value.newPassword) {
-                        return callback(new Error('两次输入的密码不一致'));
-                    } else {
-                        return callback();
-                    }
+const userStore = useUserStore();
+const userInfoForm = ref({
+    username: userStore.userInfo?.username,
+    nickname: userStore.userInfo?.nickname,
+    phone: userStore.userInfo?.phone,
+    sex: userStore.userInfo?.sex,
+    email: userStore.userInfo?.email,
+    signature: userStore.userInfo?.signature
+});
+const userInfoFormRef = ref(null);
+const changePasswordForm = ref({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+});
+const changePasswordFormRef = ref(null);
+const changePasswordFormRules = ref({
+    oldPassword: [{ required: true, message: '请输入原密码', trigger: 'blur' }],
+    newPassword: [
+        { required: true, message: '请输入新密码', trigger: 'blur' },
+        { min: 6, max: 20, message: '密码长度为6-20', trigger: 'blur' }
+    ],
+    confirmPassword: [
+        { required: true, message: '请再次输入新密码', trigger: 'blur' },
+        {
+            validator: function (rule, value, callback) {
+                if (value !== changePasswordForm.value.newPassword) {
+                    return callback(new Error('两次输入的密码不一致'));
+                } else {
+                    return callback();
                 }
             }
-        ]
-    });
-    const phoneValidator = function (rule, value, callback) {
-        const phoneRegex = /^1[3-9]\d{9}$/;
-        if (!value) {
-            return callback(new Error('请输入手机号'));
-        } else if (!phoneRegex.test(value)) {
-            return callback(new Error('请输入有效的手机号'));
-        } else {
-            return callback();
         }
-    };
-    const userInfoFormRules = ref({
-        nickname: [
-            { required: true, message: '请输入昵称', trigger: 'blur' },
-            { min: 1, max: 50, message: '昵称长度为1-25', trigger: 'blur' }
-        ],
-        phone: [
-            { required: true, message: '请输入手机号', trigger: 'blur' },
-            { validator: phoneValidator, trigger: 'blur' }
-        ],
-        email: [{ type: 'email', message: '请输入合法的邮箱地址', trigger: 'blur' }]
+    ]
+});
+const phoneValidator = function (rule, value, callback) {
+    const phoneRegex = /^1[3-9]\d{9}$/;
+    if (!value) {
+        return callback(new Error('请输入手机号'));
+    } else if (!phoneRegex.test(value)) {
+        return callback(new Error('请输入有效的手机号'));
+    } else {
+        return callback();
+    }
+};
+const userInfoFormRules = ref({
+    nickname: [
+        { required: true, message: '请输入昵称', trigger: 'blur' },
+        { min: 1, max: 50, message: '昵称长度为1-25', trigger: 'blur' }
+    ],
+    phone: [
+        { required: true, message: '请输入手机号', trigger: 'blur' },
+        { validator: phoneValidator, trigger: 'blur' }
+    ],
+    email: [{ type: 'email', message: '请输入合法的邮箱地址', trigger: 'blur' }]
+});
+
+const doUpdateUserInfo = () => {
+    userInfoFormRef.value.validate(valid => {
+        if (!valid) {
+            return false;
+        }
+        updateUserInfo(userInfoForm.value).then(res => {
+            ElMessage.success('修改成功');
+            const newUserInfo = res.data;
+            userStore.updateUser(newUserInfo);
+        });
     });
+};
 
-    const doUpdateUserInfo = () => {
-        userInfoFormRef.value.validate(valid => {
-            if (!valid) {
-                return false;
-            }
-            updateUserInfo(userInfoForm.value).then(res => {
-                ElMessage.success('修改成功');
-                const newUserInfo = res.data;
-                userStore.updateUser(newUserInfo);
-            });
+const doChangePassword = () => {
+    changePasswordFormRef.value.validate(valid => {
+        if (!valid) {
+            return false;
+        }
+        const changePasswordData = Object.assign({}, changePasswordForm.value);
+        changePasswordData.oldPassword = encryptByRsa(changePasswordData.oldPassword, atob(publicKey.value));
+        changePasswordData.newPassword = encryptByRsa(changePasswordData.newPassword, atob(publicKey.value));
+        changePasswordData.confirmPassword = encryptByRsa(changePasswordData.confirmPassword, atob(publicKey.value));
+        changePassword(changePasswordData).then(res => {
+            ElMessage.success('修改成功');
         });
-    };
-
-    const doChangePassword = () => {
-        changePasswordFormRef.value.validate(valid => {
-            if (!valid) {
-                return false;
-            }
-            changePassword(changePasswordForm.value).then(res => {
-                ElMessage.success('修改成功');
-            });
-        });
-    };
+    });
+};
 </script>
 <template>
     <el-tabs type="border-card">
