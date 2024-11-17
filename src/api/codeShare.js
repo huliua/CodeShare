@@ -15,20 +15,6 @@ export function saveCodes(param) {
 }
 
 /**
- * 删除代码
- */
-export function deleteCodes(param) {
-    return request({
-        url: '/codeShare/deleteCodes',
-        headers: {
-            needToken: true
-        },
-        method: 'post',
-        data: param
-    });
-}
-
-/**
  * 查看代码库
  */
 export function getCodesList(param) {
@@ -87,6 +73,16 @@ export function favourCode(params) {
 export function getCodeShare(id) {
     return request({
         url: `/codeShare/getCodeShare/${id}`,
+        headers: {
+            needToken: true
+        },
+        method: 'post'
+    });
+}
+
+export function deleteCode(id) {
+    return request({
+        url: `/codeShare/deleteCodeShare/${id}`,
         headers: {
             needToken: true
         },

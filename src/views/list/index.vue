@@ -1,100 +1,100 @@
 <script setup>
-import { Refresh, Search, Star, StarFilled } from '@element-plus/icons-vue';
-import { favourCode, getCodesList } from '@/api/codeShare';
-import { useRouter } from 'vue-router';
-import { onActivated } from 'vue';
-import { useDictStore } from '@/store/dictStore.js';
+    import { Refresh, Search, Star, StarFilled } from '@element-plus/icons-vue';
+    import { favourCode, getCodesList } from '@/api/codeShare';
+    import { useRouter } from 'vue-router';
+    import { onActivated } from 'vue';
+    import { useDictStore } from '@/store/dictStore.js';
 
-const dictStore = useDictStore();
-const router = useRouter();
-const dataList = ref([]);
-const loading = ref(false);
-const pageSize = ref(10);
-const pageNum = ref(1);
-const total = ref(0);
-// 标签字典
-const tagDictList = ref([]);
-onActivated(async () => {
-    // 初始化字典数据
-    tagDictList.value = await dictStore.getDict('t_tag');
-});
-
-const queryRef = ref(null);
-// 查询条件模型
-const queryParams = ref({
-    title: '',
-    tag: [],
-    createTime: []
-});
-
-const resetQuery = function () {
-    queryRef.value.resetFields();
-    getDataList();
-};
-
-/**
- * 获取数据列表
- */
-const getDataList = function () {
-    loading.value = true;
-    getCodesList({
-        pageSize: pageSize.value,
-        pageNum: pageNum.value,
-        ...queryParams.value
-    }).then(res => {
-        dataList.value = res.data.rows;
-        total.value = res.data.total;
-        loading.value = false;
+    const dictStore = useDictStore();
+    const router = useRouter();
+    const dataList = ref([]);
+    const loading = ref(false);
+    const pageSize = ref(10);
+    const pageNum = ref(1);
+    const total = ref(0);
+    // 标签字典
+    const tagDictList = ref([]);
+    onActivated(async () => {
+        // 初始化字典数据
+        tagDictList.value = await dictStore.getDict('t_tag');
     });
-};
 
-/**
- * 改变收藏状态
- */
-const changeFavo = function (item) {
-    favourCode({
-        id: item.id,
-        operateType: item.hasStared ? 'undo_favorite' : 'favorite'
-    }).then(() => {
-        item.hasStared = !item.hasStared;
-        ElMessage.success(item.hasStared ? '收藏成功' : '取消成功');
+    const queryRef = ref(null);
+    // 查询条件模型
+    const queryParams = ref({
+        title: '',
+        tag: [],
+        createTime: []
     });
-};
 
-/**
- * 跳转到编辑页面
- */
-const goEdit = function (item) {
-    if (item.id) {
-        router.push({ path: `edit/${item.id}` });
-    } else {
-        router.push({ path: '/index' });
-    }
-};
+    const resetQuery = function () {
+        queryRef.value.resetFields();
+        getDataList();
+    };
 
-/**
- * 跳转到详情页面
- */
-const goDetail = function (item) {
-    if (item.id) {
-        router.push({ path: `detail/${item.id}` });
-    } else {
-        router.push({ path: '/index' });
-    }
-};
+    /**
+     * 获取数据列表
+     */
+    const getDataList = function () {
+        loading.value = true;
+        getCodesList({
+            pageSize: pageSize.value,
+            pageNum: pageNum.value,
+            ...queryParams.value
+        }).then(res => {
+            dataList.value = res.data.rows;
+            total.value = res.data.total;
+            loading.value = false;
+        });
+    };
 
-const changeHover = function (item, isHover) {
-    item.isHover = isHover;
-};
+    /**
+     * 改变收藏状态
+     */
+    const changeFavo = function (item) {
+        favourCode({
+            id: item.id,
+            operateType: item.hasStared ? 'undo_favorite' : 'favorite'
+        }).then(() => {
+            item.hasStared = !item.hasStared;
+            ElMessage.success(item.hasStared ? '收藏成功' : '取消成功');
+        });
+    };
 
-const getIsHover = function (item) {
-    return item.isHover;
-};
+    /**
+     * 跳转到编辑页面
+     */
+    const goEdit = function (item) {
+        if (item.id) {
+            router.push({ path: `edit/${item.id}` });
+        } else {
+            router.push({ path: '/index' });
+        }
+    };
 
-// 激活的时候加载数据
-onActivated(() => {
-    getDataList();
-});
+    /**
+     * 跳转到详情页面
+     */
+    const goDetail = function (item) {
+        if (item.id) {
+            router.push({ path: `detail/${item.id}` });
+        } else {
+            router.push({ path: '/index' });
+        }
+    };
+
+    const changeHover = function (item, isHover) {
+        item.isHover = isHover;
+    };
+
+    const getIsHover = function (item) {
+        return item.isHover;
+    };
+
+    // 激活的时候加载数据
+    onActivated(() => {
+        getDataList();
+    });
 </script>
 
 <template>
@@ -146,7 +146,6 @@ onActivated(() => {
                                 </el-icon>
                             </template>
                         </el-button>
-                        <el-button link color="var(--el-color-primary-dark-2)" @click="goEdit(item)">编辑</el-button>
                         <el-button link color="var(--el-color-primary-dark-2)" @click="goDetail(item)">查看</el-button>
                     </div>
                 </div>
@@ -162,42 +161,42 @@ onActivated(() => {
 </template>
 
 <style scoped>
-.box-card {
-    position: relative;
-    width: 250px;
-    min-height: 240px;
-}
+    .box-card {
+        position: relative;
+        width: 250px;
+        min-height: 240px;
+    }
 
-.card-header-title {
-    margin-bottom: 5px;
-    color: var(--el-text-color-primary);
-    font-weight: 600;
-}
+    .card-header-title {
+        margin-bottom: 5px;
+        color: var(--el-text-color-primary);
+        font-weight: 600;
+    }
 
-.card-header-desciption {
-    min-height: 42px;
-    margin-bottom: 5px;
-    color: var(--el-text-color-secondary);
-}
+    .card-header-desciption {
+        min-height: 42px;
+        margin-bottom: 5px;
+        color: var(--el-text-color-secondary);
+    }
 
-.card-bottom {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 30px;
-    background: #337ecc73;
-}
+    .card-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 30px;
+        background: #337ecc73;
+    }
 
-.card-bottom .button-group {
-    display: flex;
-    justify-content: flex-end;
-    height: 100%;
-    padding: 0 18px;
-}
+    .card-bottom .button-group {
+        display: flex;
+        justify-content: flex-end;
+        height: 100%;
+        padding: 0 18px;
+    }
 
-.pagination {
-    margin-top: 20px;
-    text-align: center;
-}
+    .pagination {
+        margin-top: 20px;
+        text-align: center;
+    }
 </style>

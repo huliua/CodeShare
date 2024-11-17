@@ -120,11 +120,15 @@
     });
 
     // 属性
-    const props = defineProps(['code', 'lang']);
+    const disabled = ref(false);
+    const props = defineProps(['code', 'lang', 'disabled']);
     onMounted(() => {
         // 赋值，初始化
         content.value = props.code;
         language.value = props.lang;
+        if (props.hasOwnProperty('disabled')) {
+            disabled.value = props.disabled;
+        }
     });
     watch(
         props,
@@ -159,7 +163,7 @@
         <el-col :span="24" style="height: 40px">
             <el-row>
                 <el-col :span="24">
-                    <el-select v-model="language" placeholder="请选择语言" size="small" style="width: 120px" :filterable="true">
+                    <el-select v-model="language" placeholder="请选择语言" size="small" style="width: 120px" :filterable="true" :disabled="disabled">
                         <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
                     </el-select>
                 </el-col>
@@ -168,7 +172,7 @@
         <el-col :span="24" style="height: calc(100% - 40px); overflow: scroll">
             <el-row style="height: 100%">
                 <el-col :span="24">
-                    <Codemirror v-model="content" :spellcheck="true" :autofocus="true" :indent-with-tab="true" :tabSize="4" :extensions="extensions" :style="{ height: '100%' }" />
+                    <Codemirror v-model="content" :spellcheck="true" :autofocus="true" :indent-with-tab="true" :tabSize="4" :extensions="extensions" :style="{ height: '100%' }" :disabled="disabled" />
                 </el-col>
             </el-row>
         </el-col>

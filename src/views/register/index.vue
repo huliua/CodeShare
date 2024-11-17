@@ -1,91 +1,94 @@
 <script setup>
-import { User, Lock, Suitcase, Female, Phone, Link, Collection } from '@element-plus/icons-vue';
-import { useRouter } from 'vue-router';
-import { register } from '@/api/auth';
-import { encryptByRsa } from '@/utils/commonUtils';
+    import { Collection, Female, Link, Lock, Phone, Suitcase, User } from '@element-plus/icons-vue';
+    import { useRouter } from 'vue-router';
+    import { register } from '@/api/auth';
+    import { encryptByRsa } from '@/utils/commonUtils';
 
-const router = useRouter();
-const appName = ref(import.meta.env.VITE_APP_TITLE);
-const publicKey = ref(import.meta.env.VITE_APP_PUBLIC_KEY);
-const registerRef = ref(null);
-const registerForm = ref({
-    username: '',
-    nickname: '',
-    password: '',
-    confirmPassword: '',
-    phone: '',
-    sex: '',
-    email: '',
-    signature: ''
-});
-
-const phoneValidator = (rule, value, callback) => {
-
-    if (!value) {
-        return callback(new Error('请输入手机号'));
-    }
-    if (!/^1[3456789]\d{9}$/.test(value)) {
-        return callback(new Error('请输入正确的手机号'));
-    }
-    callback();
-};
-
-const passworValidator = function (rule, value, callback) {
-    if (value.length < 6 || value.length > 20) {
-        return callback(new Error('密码长度为6-20字符'));
-    }
-    if (registerForm.value.confirmPassword !== registerForm.value.password) {
-        return callback(new Error('两次输入的密码不一致'));
-    } else {
-        return callback();
-    }
-};
-const registerRules = reactive({
-    username: [
-        { required: true, message: '请输入用户名', trigger: 'blur' },
-        { min: 3, max: 15, message: '长度在3到15个字符', trigger: 'blur' }
-    ],
-    nickname: [
-        { required: true, message: '请输入昵称', trigger: 'blur' },
-        { min: 3, max: 15, message: '长度在3到15个字符' }
-    ],
-    password: [
-        { required: true, message: '请输入密码', trigger: 'blur' },
-        { validator: passworValidator, trigger: 'blur' }
-    ],
-    confirmPassword: [
-        { required: true, message: '请再次输入新密码', trigger: 'blur' },
-        { validator: passworValidator, trigger: 'blur' }
-    ],
-    phone: [
-        { required: true, message: '请输入手机号！', trigger: 'blur' },
-        { validator: phoneValidator, trigger: 'blur' }
-    ],
-    email: [
-        { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur'] }
-    ],
-    sex: [
-        { required: true, message: '请选择性别', trigger: 'blur' }
-    ]
-});
-
-const isLoading = ref(false);
-const handleRegister = () => {
-    registerRef.value.validate(valid => {
-        if (!valid) {
-            return false;
-        }
-        const registerFormData = Object.assign({}, registerForm.value);
-
-        // 对登录密码进行加密处理
-        registerFormData.password = encryptByRsa(registerFormData.password, atob(publicKey.value));
-        registerFormData.confirmPassword = encryptByRsa(registerFormData.confirmPassword, atob(publicKey.value));
-        register(registerFormData).then(res => {
-            ElMessage.success('注册成功');
-            router.push('/login');
-        });
+    const router = useRouter();
+    const appName = ref(import.meta.env.VITE_APP_TITLE);
+    const publicKey = ref(import.meta.env.VITE_APP_PUBLIC_KEY);
+    const registerRef = ref(null);
+    const registerForm = ref({
+        username: '',
+        nickname: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+        sex: '',
+        email: '',
+        signature: ''
     });
-};
+
+    const phoneValidator = (rule, value, callback) => {
+        if (!value) {
+            return callback(new Error('请输入手机号'));
+        }
+        if (!/^1[3456789]\d{9}$/.test(value)) {
+            return callback(new Error('请输入正确的手机号'));
+        }
+        callback();
+    };
+
+    const passwordValidator = function (rule, value, callback) {
+        if (value.length < 6 || value.length > 20) {
+            return callback(new Error('密码长度为6-20字符'));
+        }
+        if (registerForm.value.confirmPassword) {
+            // 触发确认密码的校验
+            registerRef.value.validateField('confirmPassword');
+        }
+        return callback();
+    };
+
+    const confirmValidator = function (rule, value, callback) {
+        if (registerForm.value.confirmPassword !== registerForm.value.password) {
+            return callback(new Error('两次输入的密码不一致'));
+        } else {
+            return callback();
+        }
+    };
+    const registerRules = reactive({
+        username: [
+            { required: true, message: '请输入用户名', trigger: 'blur' },
+            { min: 3, max: 15, message: '长度在3到15个字符', trigger: 'blur' }
+        ],
+        nickname: [
+            { required: true, message: '请输入昵称', trigger: 'blur' },
+            { min: 1, max: 25, message: '长度在1到25个字符' }
+        ],
+        password: [
+            { required: true, message: '请输入密码', trigger: 'blur' },
+            { validator: passwordValidator, trigger: 'blur' }
+        ],
+        confirmPassword: [
+            { required: true, message: '请再次输入新密码', trigger: 'blur' },
+            { validator: confirmValidator, trigger: 'blur' }
+        ],
+        phone: [
+            { required: true, message: '请输入手机号！', trigger: 'blur' },
+            { validator: phoneValidator, trigger: 'blur' }
+        ],
+        email: [{ type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur'] }],
+        sex: [{ required: true, message: '请选择性别', trigger: 'blur' }]
+    });
+
+    const isLoading = ref(false);
+    const handleRegister = () => {
+        registerRef.value.validate(valid => {
+            if (!valid) {
+                return false;
+            }
+            const registerFormData = Object.assign({}, registerForm.value);
+
+            // 对登录密码进行加密处理
+            registerFormData.password = encryptByRsa(registerFormData.password, atob(publicKey.value));
+            registerFormData.confirmPassword = encryptByRsa(registerFormData.confirmPassword, atob(publicKey.value));
+            register(registerFormData).then(res => {
+                ElMessage.success('注册成功');
+                router.push('/login');
+            });
+        });
+    };
 </script>
 <template>
     <div class="page-container">
@@ -166,11 +169,16 @@ const handleRegister = () => {
                         </template>
                     </el-input>
                 </el-form-item>
-                <el-row style="margin-bottom: 10px;">
-                    <el-col :span="8" :offset="8">
-                        <el-button :loading="isLoading" size="large" type="primary" style="width: 100%" @click.prevent="handleRegister">
+                <el-row style="margin-bottom: 10px" justify="center" align="middle">
+                    <el-col :span="5" :offset="9" style="text-align: center">
+                        <el-button :loading="isLoading" size="large" type="primary" @click.prevent="handleRegister">
                             <span v-if="!isLoading">注 册</span>
                             <span v-else>提交中...</span>
+                        </el-button>
+                    </el-col>
+                    <el-col :span="9">
+                        <el-button type="text" @click="router.push('/login')" style="float: left">
+                            <span style="color: #409eff">已有账号？去登录</span>
                         </el-button>
                     </el-col>
                 </el-row>
@@ -186,57 +194,44 @@ const handleRegister = () => {
 </template>
 
 <style lang="css" scoped>
-.page-container {
-    background-image: url('../../assets/images/login-background.jpg');
-    background-size: cover;
-    height: 100vh;
-    overflow: scroll;
-}
+    .page-container {
+        height: 100vh;
+        overflow: scroll;
+        background-image: url('../../assets/images/login-background.jpg');
+        background-size: cover;
+    }
 
-.register {
-    display: flex;
-    align-items: center;
-    min-height: calc(100vh - 60px);
-    justify-content: center;
-}
+    .register {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 60px);
+    }
 
-.title {
-    margin: 0px auto 30px auto;
-    color: #707070;
-    text-align: center;
-}
+    .title {
+        margin: 0px auto 30px auto;
+        color: #707070;
+        text-align: center;
+    }
 
-.register-form {
-    width: 500px;
-    padding: 25px 25px 5px 25px;
-    background: #ffffff;
-    border-radius: 6px;
+    .register-form {
+        width: 500px;
+        padding: 25px 25px 5px 25px;
+        background: #ffffff;
+        border-radius: 6px;
 
-    .el-input {
-        height: 40px;
-
-        input {
+        .el-input {
             height: 40px;
+
+            input {
+                height: 40px;
+            }
+        }
+
+        .input-icon {
+            width: 14px;
+            height: 39px;
+            margin-left: 0px;
         }
     }
-
-    .input-icon {
-        width: 14px;
-        height: 39px;
-        margin-left: 0px;
-    }
-}
-
-.el-register-footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    height: 40px;
-    color: #fff;
-    font-size: 12px;
-    font-family: Arial;
-    line-height: 40px;
-    letter-spacing: 1px;
-    text-align: center;
-}
 </style>

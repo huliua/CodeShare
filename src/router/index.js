@@ -30,8 +30,6 @@ const constantRoutes = [
                 path: '/list',
                 component: () => import('@/views/list/index.vue'),
                 meta: {
-                    needRecordIsBack: true,
-                    isBack: false,
                     keepAlive: true,
                     title: '代码库-CodeShare',
                     permission: []
@@ -42,8 +40,6 @@ const constantRoutes = [
                 path: '/my',
                 component: () => import('@/views/myCode/index.vue'),
                 meta: {
-                    needRecordIsBack: true,
-                    isBack: false,
                     keepAlive: true,
                     title: '我的代码-CodeShare',
                     permission: []
@@ -54,8 +50,6 @@ const constantRoutes = [
                 path: '/favour',
                 component: () => import('@/views/favour/index.vue'),
                 meta: {
-                    needRecordIsBack: true,
-                    isBack: false,
                     keepAlive: true,
                     title: '我的收藏-CodeShare',
                     permission: []
@@ -75,8 +69,9 @@ const constantRoutes = [
                 path: '/detail/:id',
                 component: () => import('@/views/detail/detail.vue'),
                 meta: {
-                    keepAlive: true,
+                    keepAlive: false,
                     title: '详情',
+                    readonly: true,
                     permission: []
                 }
             },
@@ -85,8 +80,9 @@ const constantRoutes = [
                 path: '/edit/:id',
                 component: () => import('@/views/detail/detail.vue'),
                 meta: {
-                    keepAlive: true,
+                    keepAlive: false,
                     title: '编辑',
+                    readonly: false,
                     permission: []
                 }
             }
@@ -127,21 +123,14 @@ router.beforeEach((to, from, next) => {
     if (title) {
         document.title = title;
     }
-    // 如果是详情页或者编辑页跳转来，且去往的页面需要记录isBack,则设置isBack为true
-    if ((from.name == 'detail' || from.name == 'edit') && to.meta.needRecordIsBack == true) {
-        to.meta.isBack = true;
-    }
-    // 如果从需要记录isBack的页面跳转到别的页面，就把isBack重置为false
-    if (from.meta.needRecordIsBack == true) {
-        from.meta.isBack = false;
-    }
+
     // 跳转注册页
-    if (to.path == '/register') {
+    if (to.path === '/register') {
         next();
         return;
     }
     // 判断是否登录
-    if (to.path != '/login' && useUserStore().userInfo === null) {
+    if (to.path !== '/login' && useUserStore().userInfo === null) {
         // 先获取用户信息
         isRelogin.show = true;
         getUserInfo()
