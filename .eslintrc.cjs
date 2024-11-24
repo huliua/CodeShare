@@ -11,9 +11,7 @@ module.exports = {
     },
     plugins: ['vue', 'prettier'],
     rules: {
-        'prettier/prettier': 'error'
-    },
-    overrides: [{
-        "vue/multi-word-component-names":"off"
-    }]
+        'prettier/prettier': 'error',
+        'vue/multi-word-component-names': 'off'
+    }
 };
