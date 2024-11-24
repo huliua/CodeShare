@@ -10,7 +10,6 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn';
 import VueCodemirror from 'vue-codemirror';
 import { basicSetup } from 'codemirror';
 
-// import '@/api/mock.js';
 const pinia = createPinia();
 const app = createApp(App);
 app.use(VueCodemirror, {

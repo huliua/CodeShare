@@ -12,11 +12,12 @@
     import { php } from '@codemirror/lang-php';
     import { go } from '@codemirror/lang-go';
     import { rust } from '@codemirror/lang-rust';
-    import { onMounted, ref, watch, onUnmounted } from 'vue';
+    import { onMounted, ref, watch } from 'vue';
     import { basicSetup } from 'codemirror';
     import { CopyDocument, FullScreen } from '@element-plus/icons-vue';
     import useClipboard from 'vue-clipboard3';
     import { Codemirror } from 'vue-codemirror';
+
     const { toClipboard } = useClipboard();
 
     // 编辑器内容
@@ -160,7 +161,7 @@
     /**
      * 复制
      */
-    const copy = async() => {
+    const copy = async () => {
         try {
             await toClipboard(content.value);
             ElMessage.success('复制成功');
@@ -188,14 +189,14 @@
         if (wrapper) {
             wrapper.requestFullscreen();
         }
-    }
+    };
 
     /**
      * 退出全屏
      */
     const exitFullscreen = () => {
         document.exitFullscreen();
-    }
+    };
 
     // 暴露方法，外部引用
     defineExpose({
@@ -216,8 +217,14 @@
         <el-col :span="24" class="codemirror">
             <el-row class="codemirror-tools">
                 <el-col :span="24">
-                    <span class="tools-item" @click="copy"><el-icon><CopyDocument /></el-icon>复制</span>
-                    <span class="tools-item" @click="toggleFullscreen"><el-icon><FullScreen /></el-icon>全屏</span>
+                    <span class="tools-item" @click="copy">
+                        <el-icon><CopyDocument /></el-icon>
+                        复制
+                    </span>
+                    <span class="tools-item" @click="toggleFullscreen">
+                        <el-icon><FullScreen /></el-icon>
+                        全屏
+                    </span>
                 </el-col>
             </el-row>
             <el-row style="height: 100%">
@@ -270,7 +277,6 @@
     }
 
     .codemirror-tools .tools-item:hover {
-        color: #409EFF;
+        color: #409eff;
     }
-
 </style>

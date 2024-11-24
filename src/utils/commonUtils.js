@@ -59,7 +59,7 @@ export function encryptByAes(str) {
     return encrypted.toString();
 }
 
-// 生成 RSA 密钥对  
+// 生成 RSA 密钥对
 export function generateKeyPair() {
     const crypt = new JSEncrypt();
     const publicKey = crypt.getPublicKey();
@@ -70,7 +70,6 @@ export function generateKeyPair() {
 /**
  * 使用rsa加密
  * @param {string} str 待加密的字符串
- * @returns 加密后的字符串
  */
 export function encryptByRsa(str, publicKey) {
     const crypt = new JSEncrypt();

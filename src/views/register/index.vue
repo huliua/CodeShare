@@ -83,7 +83,7 @@
             // 对登录密码进行加密处理
             registerFormData.password = encryptByRsa(registerFormData.password, atob(publicKey.value));
             registerFormData.confirmPassword = encryptByRsa(registerFormData.confirmPassword, atob(publicKey.value));
-            register(registerFormData).then(res => {
+            register(registerFormData).then(() => {
                 ElMessage.success('注册成功');
                 router.push('/login');
             });
@@ -177,7 +177,7 @@
                         </el-button>
                     </el-col>
                     <el-col :span="9">
-                        <el-button type="text" @click="router.push('/login')" style="float: left">
+                        <el-button type="text" style="float: left" @click="router.push('/login')">
                             <span style="color: #409eff">已有账号？去登录</span>
                         </el-button>
                     </el-col>
@@ -209,7 +209,7 @@
     }
 
     .title {
-        margin: 0px auto 30px auto;
+        margin: 0 auto 30px auto;
         color: #707070;
         text-align: center;
     }
@@ -231,7 +231,7 @@
         .input-icon {
             width: 14px;
             height: 39px;
-            margin-left: 0px;
+            margin-left: 0;
         }
     }
 </style>

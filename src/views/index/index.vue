@@ -1,55 +1,55 @@
 <!--首页-->
 <script setup>
-import { useUserStore } from '@/store/userStore';
-import { ChatLineSquare, Folder, Moon, Notebook, Plus, Star, Sunny, SwitchButton, User } from '@element-plus/icons-vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useDark, useToggle } from '@vueuse/core';
+    import { useUserStore } from '@/store/userStore';
+    import { ChatLineSquare, Folder, Moon, Notebook, Plus, Star, Sunny, SwitchButton, User } from '@element-plus/icons-vue';
+    import { useRoute, useRouter } from 'vue-router';
+    import { useDark, useToggle } from '@vueuse/core';
 
-const isDark = useDark();
-const toggleDark = useToggle(isDark);
+    const isDark = useDark();
+    const toggleDark = useToggle(isDark);
 
-const userStore = useUserStore();
-const appName = ref(import.meta.env.VITE_APP_TITLE);
-// 获取当前路由地址
-const route = useRoute();
-const router = useRouter();
-// 默认选中菜单项
-const activeIndex = computed(() => route.fullPath);
+    const userStore = useUserStore();
+    const appName = ref(import.meta.env.VITE_APP_TITLE);
+    // 获取当前路由地址
+    const route = useRoute();
+    const router = useRouter();
+    // 默认选中菜单项
+    const activeIndex = computed(() => route.fullPath);
 
-/**
- * 跳转到指定页面
- */
-function goto(path, openType) {
-    window.open(path, openType || '_blank');
-}
+    /**
+     * 跳转到指定页面
+     */
+    function goto(path, openType) {
+        window.open(path, openType || '_blank');
+    }
 
-/**
- * 退出登录
- */
-function logout() {
-    // 用户确认操作
-    ElMessageBox.confirm('确定要退出登录吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-    })
-        .then(() => {
-            // 执行退出登录操作
-            logoutAction();
+    /**
+     * 退出登录
+     */
+    function logout() {
+        // 用户确认操作
+        ElMessageBox.confirm('确定要退出登录吗?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
         })
-        .catch(() => {
-            // 用户取消操作
-        });
-}
+            .then(() => {
+                // 执行退出登录操作
+                logoutAction();
+            })
+            .catch(() => {
+                // 用户取消操作
+            });
+    }
 
-/**
- * 执行退出登录操作
- */
-function logoutAction() {
-    userStore.logout().then(() => {
-        router.push('/login');
-    });
-}
+    /**
+     * 执行退出登录操作
+     */
+    function logoutAction() {
+        userStore.logout().then(() => {
+            router.push('/login');
+        });
+    }
 </script>
 <template>
     <div class="main-content">
@@ -110,8 +110,7 @@ function logoutAction() {
                     <el-col :xs="5" :sm="6" :md="4" :lg="3" :xl="2">
                         <div class="avatar">
                             <el-dropdown>
-                                <el-avatar style="background: transparent;" :src="userStore?.userInfo.sex === '0' ? '/src/assets/images/female.png' : '/src/assets/images/male.png'">
-                                </el-avatar>
+                                <el-avatar style="background: transparent" :src="userStore?.userInfo.sex === '0' ? '/src/assets/images/female.png' : '/src/assets/images/male.png'"></el-avatar>
                                 <template #dropdown>
                                     <el-dropdown-menu>
                                         <el-dropdown-item v-if="!isDark" :icon="Moon" @click="toggleDark()">黑暗模式</el-dropdown-item>
@@ -121,9 +120,11 @@ function logoutAction() {
                                     </el-dropdown-menu>
                                 </template>
                             </el-dropdown>
-                            <el-divider direction="vertical" border-style="hidden" style="margin: 0 2px;" />
+                            <el-divider direction="vertical" border-style="hidden" style="margin: 0 2px" />
                             <el-tooltip :content="userStore.userInfo.nickname" placement="bottom" :show-after="1000">
-                                <el-text style="cursor: default;" tag="b" truncated :class="userStore?.userInfo.sex === '0' ? 'sex-female' : 'sex-male'">{{ userStore.userInfo.nickname }}</el-text>
+                                <el-text style="cursor: default" tag="b" truncated :class="userStore?.userInfo.sex === '0' ? 'sex-female' : 'sex-male'">
+                                    {{ userStore.userInfo.nickname }}
+                                </el-text>
                             </el-tooltip>
                         </div>
                     </el-col>
@@ -147,65 +148,65 @@ function logoutAction() {
 </template>
 
 <style scoped>
-.app-title {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    color: var(--el-color-primary);
-    font-weight: bold;
-    font-size: 18px;
-    cursor: pointer;
-}
+    .app-title {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        color: var(--el-color-primary);
+        font-weight: bold;
+        font-size: 18px;
+        cursor: pointer;
+    }
 
-.main-content {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-}
+    .main-content {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
 
-.main {
-    min-height: calc(100vh - 120px);
-}
+    .main {
+        min-height: calc(100vh - 120px);
+    }
 
-.avatar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-}
+    .avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+    }
 
-.avatar span:hover {
-    outline: none !important;
-}
+    .avatar span:hover {
+        outline: none !important;
+    }
 
-.avatar span:focus-visible {
-    outline: none !important;
-}
+    .avatar span:focus-visible {
+        outline: none !important;
+    }
 
-.footer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    color: rgb(192, 196, 204);
-    font-size: 12px;
-    text-align: center;
-    cursor: pointer;
-}
+    .footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        color: rgb(192, 196, 204);
+        font-size: 12px;
+        text-align: center;
+        cursor: pointer;
+    }
 
-.sex-male {
-    color: #74b7eb;
-}
+    .sex-male {
+        color: #74b7eb;
+    }
 
-.sex-female {
-    color: #faa59b;
-}
+    .sex-female {
+        color: #faa59b;
+    }
 
-.username {
-    width: calc(100% - 40px);
-}
+    .username {
+        width: calc(100% - 40px);
+    }
 </style>
