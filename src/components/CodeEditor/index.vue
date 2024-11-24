@@ -12,8 +12,12 @@
     import { php } from '@codemirror/lang-php';
     import { go } from '@codemirror/lang-go';
     import { rust } from '@codemirror/lang-rust';
-    import { onMounted, ref, watch } from 'vue';
+    import { onMounted, ref, watch, onUnmounted } from 'vue';
     import { basicSetup } from 'codemirror';
+    import { CopyDocument, FullScreen } from '@element-plus/icons-vue';
+    import useClipboard from 'vue-clipboard3';
+    import { Codemirror } from 'vue-codemirror';
+    const { toClipboard } = useClipboard();
 
     // 编辑器内容
     let content = ref('');
@@ -153,6 +157,46 @@
         emits('update:code', content.value);
     });
 
+    /**
+     * 复制
+     */
+    const copy = async() => {
+        try {
+            await toClipboard(content.value);
+            ElMessage.success('复制成功');
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
+    /**
+     * 切换全屏
+     */
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            enterFullscreen();
+        } else {
+            exitFullscreen();
+        }
+    };
+
+    /**
+     * 进入全屏
+     */
+    const enterFullscreen = () => {
+        const wrapper = document.querySelector('.codemirror');
+        if (wrapper) {
+            wrapper.requestFullscreen();
+        }
+    }
+
+    /**
+     * 退出全屏
+     */
+    const exitFullscreen = () => {
+        document.exitFullscreen();
+    }
+
     // 暴露方法，外部引用
     defineExpose({
         getValue
@@ -169,7 +213,13 @@
                 </el-col>
             </el-row>
         </el-col>
-        <el-col :span="24" style="height: calc(100% - 40px); overflow: scroll">
+        <el-col :span="24" class="codemirror">
+            <el-row class="codemirror-tools">
+                <el-col :span="24">
+                    <span class="tools-item" @click="copy"><el-icon><CopyDocument /></el-icon>复制</span>
+                    <span class="tools-item" @click="toggleFullscreen"><el-icon><FullScreen /></el-icon>全屏</span>
+                </el-col>
+            </el-row>
             <el-row style="height: 100%">
                 <el-col :span="24">
                     <Codemirror v-model="content" :spellcheck="true" :autofocus="true" :indent-with-tab="true" :tabSize="4" :extensions="extensions" :style="{ height: '100%' }" :disabled="disabled" />
@@ -184,17 +234,43 @@
         height: 100%;
     }
 
-    .CodeMirror {
+    .codemirror {
+        position: relative;
+        height: calc(100% - 40px);
+        overflow: hidden;
+        overflow-y: auto;
+    }
+
+    .codemirror .fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         height: auto;
-        border: 1px solid #eee;
+        z-index: 9;
     }
 
-    #codemirror {
-        width: 100%;
-        height: 300px;
-
-        :deep(.cm-editor) {
-            width: 100%;
-        }
+    .codemirror-tools {
+        position: absolute;
+        right: 0;
+        z-index: 9;
+        background-color: #1f2532;
     }
+
+    .codemirror-tools .tools-item {
+        display: inline-flex;
+        padding: 0 4px;
+        cursor: pointer;
+        color: #bbb;
+        font-size: 12px;
+        align-items: center;
+        justify-content: space-evenly;
+        gap: 2px;
+    }
+
+    .codemirror-tools .tools-item:hover {
+        color: #409EFF;
+    }
+
 </style>

@@ -1,5 +1,5 @@
 <script setup>
-    import { onMounted } from 'vue';
+    import { nextTick, onMounted } from 'vue';
     import CodeEditor from '@/components/CodeEditor/index.vue';
     import { CirclePlus, Delete, Document, DocumentAdd, EditPen, Folder, FolderAdd, Remove } from '@element-plus/icons-vue';
     import { getUuid } from '@/utils/commonUtils';
@@ -299,6 +299,17 @@
             showContextMenu.value = false;
         }
         treeRef.value.remove(data);
+
+        // 如果文件树中不存在当前编辑器打开的文件，则取消显示代码编辑器
+        nextTick(() => {
+            const currentNode = treeRef.value.getNode(currentFileId.value);
+            if (!currentNode) {
+                codeEditorVisible.value = false;
+                currentFileId.value = '';
+                codes.value = '';
+                lang.value = '';
+            }
+        });
     }
 
     /**
@@ -451,7 +462,7 @@
                                     <el-icon @click="append(node)" v-if="data.type === 'folder'">
                                         <CirclePlus />
                                     </el-icon>
-                                    <el-icon style="margin-left: 8px" @click="remove(node, data)">
+                                    <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
                                         <Remove />
                                     </el-icon>
                                 </span>
@@ -466,8 +477,11 @@
         </el-col>
 
         <!-- 文件预览 -->
-        <el-col :span="codeEditorVisible ? 14 : 0" class="code-editor">
-            <CodeEditor v-show="codeEditorVisible" :key="currentFileId" v-model:code="codes" :lang="lang" :disabled="readOnly" @change="handleCodeChange" />
+        <el-col :span="fileTree.length > 0 ? 14 : 0" class="code-editor">
+            <transition name="el-zoom-in-center">
+                <CodeEditor v-show="codeEditorVisible" :key="currentFileId" v-model:code="codes" :lang="lang" :disabled="readOnly" @change="handleCodeChange" />
+            </transition>
+            <el-empty v-show="!codeEditorVisible" :image-size="150" description="请选择左侧的文件以展示具体内容！" />
         </el-col>
     </el-row>
 

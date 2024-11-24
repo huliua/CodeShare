@@ -55,7 +55,7 @@ onActivated(async () => {
 
 /**
  * 选中文件/文件夹
- * @param {Object} node - 当前选择的节点的对象。
+ * @param {Object} data - 当前选择的节点的对象。
  */
 function doSelect(data) {
     // 先把代码编辑器隐藏
@@ -160,6 +160,16 @@ function save() {
  */
 function remove(node, data) {
     treeRef.value.remove(data);
+    // 如果文件树中不存在当前编辑器打开的文件，则取消显示代码编辑器
+    nextTick(() => {
+        const currentNode = treeRef.value.getNode(currentFileId.value);
+        if (!currentNode) {
+            codeEditorVisible.value = false;
+            currentFileId.value = '';
+            codes.value = '';
+            lang.value = '';
+        }
+    });
 }
 
 /**
@@ -273,7 +283,7 @@ function deepBuildTreeFile(fileList, treeFileList, parentId = null) {
                                     <el-icon @click="append(node)" v-if="data.type === 'folder'">
                                         <CirclePlus />
                                     </el-icon>
-                                    <el-icon style="margin-left: 8px" @click="remove(node, data)">
+                                    <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
                                         <Remove />
                                     </el-icon>
                                 </span>

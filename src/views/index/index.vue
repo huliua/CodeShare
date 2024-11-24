@@ -58,7 +58,7 @@ function logoutAction() {
             <el-header>
                 <el-row :gutter="10">
                     <el-col :xs="5" :sm="6" :md="4" :lg="3" :xl="3">
-                        <div class="app-title" @click="goto('/index', '_self')">CodeShare</div>
+                        <div class="app-title" @click="router.push('/')">CodeShare</div>
                     </el-col>
                     <el-col :xs="14" :sm="12" :md="16" :lg="18" :xl="19">
                         <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" :router="true">
