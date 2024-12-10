@@ -8,7 +8,7 @@ export function login(param) {
     return request({
         url: '/auth/login',
         headers: {
-            needToken: false,
+            needToken: false
         },
         method: 'post',
         data: param
@@ -22,7 +22,7 @@ export function logout() {
     return request({
         url: '/auth/logout',
         headers: {
-            needToken: true,
+            needToken: true
         },
         method: 'post'
     });
@@ -38,19 +38,33 @@ export function getUserInfo() {
     });
 }
 
-
 // 刷新token
 export async function refreshToken() {
     await request({
         url: '/user/refreshToken',
         method: 'post',
         headers: {
-            needToken: false,
+            needToken: false
         },
-        _isRefreshTokenRequest: true,
+        _isRefreshTokenRequest: true
     }).then(res => {
         if (res.data) {
             setToken(res.data);
         }
+    });
+}
+
+/**
+ * 登录
+ * @param {Object} param 登录表单信息
+ */
+export function register(param) {
+    return request({
+        url: '/auth/register',
+        headers: {
+            needToken: false
+        },
+        method: 'post',
+        data: param
     });
 }
