@@ -99,11 +99,9 @@
                                     <el-icon>
                                         <ChatLineSquare />
                                     </el-icon>
-                                    联系我们
+                                    意见反馈
                                 </template>
-                                <el-menu-item index="" @click="goto('https://github.com/huliua')">Github</el-menu-item>
-                                <el-menu-item index="" @click="goto('https://gitee.com/githuliu')">Gitee</el-menu-item>
-                                <el-menu-item index="" @click="goto('https://www.cnblogs.com/huliua')">博客园</el-menu-item>
+                                <el-menu-item index="" @click="goto('https://github.com/huliua/CodeShare')">Github</el-menu-item>
                             </el-sub-menu>
                         </el-menu>
                     </el-col>

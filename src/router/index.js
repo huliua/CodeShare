@@ -104,6 +104,15 @@ const constantRoutes = [
             title: '注册-CodeShare',
             permission: []
         }
+    },
+    {
+        path: '/share/:shareId',
+        name: 'share',
+        component: () => import('@/views/share/index.vue'),
+        meta: {
+            title: '分享代码',
+            requiresAuth: false
+        }
     }
 ];
 const router = createRouter({
