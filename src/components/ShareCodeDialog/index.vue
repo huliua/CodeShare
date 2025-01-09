@@ -63,7 +63,7 @@
 <script setup>
     import { computed, ref } from 'vue';
     import { Refresh } from '@element-plus/icons-vue';
-    import useClipboard from 'vue-clipboard3';
+    import clipboard3 from 'vue-clipboard3';
     import { createShare } from '@/api/share';
 
     const props = defineProps({
@@ -119,7 +119,6 @@
 
     const loading = ref(false);
     const shareUrl = ref('');
-    const { copy } = useClipboard();
 
     // 重新生成密码
     const generatePassword = () => {
@@ -127,11 +126,13 @@
     };
 
     // 复制链接
+    const { toClipboard } = clipboard3();
     const copyLink = async () => {
         try {
-            await copy(shareUrl.value);
+            await toClipboard(shareUrl.value);
             ElMessage.success('链接已复制到剪贴板');
         } catch (error) {
+            console.error(error)
             ElMessage.error('复制失败');
         }
     };

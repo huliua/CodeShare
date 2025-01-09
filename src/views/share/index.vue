@@ -12,11 +12,6 @@
             </div>
         </template>
 
-        <template v-else>
-            <!-- 使用现有的代码详情组件，传入只读模式 -->
-            <CodeDetail :code-data="codeData" :readonly="true" />
-        </template>
-
         <!-- 密码验证弹窗 -->
         <SharePasswordDialog v-model="showPasswordDialog" @verify="handleVerifyPassword" />
     </div>
@@ -32,7 +27,6 @@
     const route = useRoute();
     const loading = ref(true);
     const error = ref('');
-    const codeData = ref(null);
     const showPasswordDialog = ref(false);
 
     // 检查分享是否有效
@@ -53,10 +47,7 @@
                 return false;
             }
 
-            // 获取代码详情
-            const code = await getShareCodeDetail(route.params.shareId);
-            codeData.value = res.data;
-            return true;
+            handleVerifyPassword();
         } catch (err) {
             error.value = '分享链接无效';
             return false;
