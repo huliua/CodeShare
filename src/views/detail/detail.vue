@@ -1,7 +1,7 @@
 <script setup>
     import { markRaw, nextTick, onMounted } from 'vue';
     import CodeEditor from '@/components/CodeEditor/index.vue';
-    import { CirclePlus, Delete, Document, DocumentAdd, EditPen, Folder, FolderAdd, Remove, Share } from '@element-plus/icons-vue';
+    import { Back, CirclePlus, Delete, Document, DocumentAdd, EditPen, Folder, FolderAdd, RefreshLeft, Remove, Share, UploadFilled } from '@element-plus/icons-vue';
     import { getUuid } from '@/utils/commonUtils';
     import { deleteCode, getCodeShare, saveCodes } from '@/api/codeShare';
     import { useRoute, useRouter } from 'vue-router';
@@ -16,6 +16,7 @@
     const route = useRoute();
 
     const id = ref('');
+    const accessToken = ref('');
 
     // 文件目录树形结构
     const treeRef = ref(null);
@@ -66,6 +67,8 @@
     onMounted(async () => {
         // 当前数据id
         id.value = route.params.id;
+        accessToken.value = route.query.accessToken || '';
+
         // 是否只读
         readOnly.value = route.meta.readonly === true;
 
@@ -73,7 +76,7 @@
         tagOptions.value = await dictStore.getDict('t_tag');
 
         // 获取
-        getCodeShare(id.value).then(res => {
+        getCodeShare(id.value, accessToken.value).then(res => {
             fileTree.value = buildFileTree(res.data.codeShareFileList || []);
             moreSettingForm.value = res.data.codeShareInfoVo || {};
             moreSettingForm.value.tags = (res.data.tagList || []).map(item => ((tagOptions.value || []).some(tag => tag.code === item.code) ? item.code : item.name));
@@ -725,17 +728,11 @@
             </el-form>
             <el-row justify="end">
                 <el-col style="text-align: right">
-                    <el-button v-if="!readOnly" type="primary" @click="submitForm">发布</el-button>
-                    <el-button v-if="!readOnly" type="warning" @click="resetForm">重置</el-button>
-                    <el-button v-if="!readOnly" type="danger" @click="confirmVisible = true">删除</el-button>
-                    <!-- 添加分享按钮 -->
-                    <el-button v-if="!route.meta.readonly" type="primary" @click="handleShare">
-                        <el-icon>
-                            <Share />
-                        </el-icon>
-                        分享
-                    </el-button>
-                    <el-button @click="goBack">返回</el-button>
+                    <el-button v-if="!readOnly" :icon="UploadFilled" type="success" @click="submitForm">发布</el-button>
+                    <el-button v-if="!readOnly" :icon="RefreshLeft" type="warning" @click="resetForm">重置</el-button>
+                    <el-button v-if="!readOnly" :icon="Delete" type="danger" @click="confirmVisible = true">删除</el-button>
+                    <el-button v-if="!route.meta.readonly" :icon="Share" type="primary" @click="handleShare">分享</el-button>
+                    <el-button :icon="Back" @click="goBack">返回</el-button>
                 </el-col>
             </el-row>
         </el-collapse-item>

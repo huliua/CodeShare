@@ -13,7 +13,7 @@
         </template>
 
         <!-- 密码验证弹窗 -->
-        <SharePasswordDialog v-model="showPasswordDialog" @verify="handleVerifyPassword" />
+        <SharePasswordDialog v-model="showPasswordDialog" @verify="getShareCode" />
     </div>
 </template>
 
@@ -47,7 +47,7 @@
                 return false;
             }
 
-            handleVerifyPassword();
+            getShareCode();
         } catch (err) {
             error.value = '分享链接无效';
             return false;
@@ -56,15 +56,16 @@
         }
     };
 
-    // 验证密码
-    const handleVerifyPassword = async password => {
+    // 获取分享的代码
+    const getShareCode = async password => {
         getShareCodeDetail(route.params.shareId, password).then(res => {
-            showPasswordDialog.value = false;
-            // 跳转到 代码详情页面，且路由地址不变
-            router.replace({
-                name: 'detail',
-                params: {
-                    id: res.data.codeShareInfoVo.id
+            if (showPasswordDialog.value) {
+                showPasswordDialog.value = false;
+            }
+            router.push({
+                path: `/share/detail/${res.data.shareCodeId}`,
+                query: {
+                    accessToken: res.data.accessToken
                 }
             });
         });

@@ -129,10 +129,10 @@
     const { toClipboard } = clipboard3();
     const copyLink = async () => {
         try {
-            await toClipboard(shareUrl.value);
+            const copyValue = '链接:' + shareUrl.value + '\n' + (shareForm.value.needPassword ? '密码:' + shareForm.value.password : '');
+            await toClipboard(copyValue);
             ElMessage.success('链接已复制到剪贴板');
         } catch (error) {
-            console.error(error)
             ElMessage.error('复制失败');
         }
     };

@@ -85,6 +85,17 @@ const constantRoutes = [
                     readonly: false,
                     permission: []
                 }
+            },
+            {
+                name: 'shareCodeDetail',
+                path: '/share/detail/:id',
+                component: () => import('@/views/detail/detail.vue'),
+                meta: {
+                    keepAlive: false,
+                    title: '详情',
+                    readonly: true,
+                    permission: []
+                }
             }
         ]
     },
@@ -110,8 +121,7 @@ const constantRoutes = [
         name: 'share',
         component: () => import('@/views/share/index.vue'),
         meta: {
-            title: '分享代码',
-            requiresAuth: false
+            title: '分享代码'
         }
     }
 ];
