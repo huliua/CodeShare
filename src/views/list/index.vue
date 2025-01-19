@@ -24,7 +24,9 @@
     const queryParams = ref({
         title: '',
         tag: [],
-        createTime: []
+        createTime: [],
+        nickname: '',
+        updateTime: []
     });
 
     const resetQuery = function () {
@@ -109,14 +111,21 @@
                 <el-option v-for="dict in tagDictList" :key="dict.code" :label="dict.name" :value="dict.code" />
             </el-select>
         </el-form-item>
+        <el-form-item label="创建人昵称" prop="nickname">
+            <el-input v-model="queryParams.nickname" placeholder="请输入创建人昵称" clearable style="width: 200px" @keyup.enter="getDataList" />
+        </el-form-item>
         <el-form-item label="创建时间" prop="createTime">
             <el-date-picker v-model="queryParams.createTime" is-range format="YYYY-MM-DD HH:mm:ss" type="datetimerange" value-format="YYYY-MM-DD HH:mm:ss" range-separator="-" start-placeholder="开始时间" end-placeholder="结束时间" />
         </el-form-item>
-        <el-form-item>
-            <el-button type="primary" :icon="Search" @click="getDataList">搜索</el-button>
-            <el-button :icon="Refresh" @click="resetQuery()">重置</el-button>
+        <el-form-item label="更新时间" prop="updateTime">
+            <el-date-picker v-model="queryParams.updateTime" is-range format="YYYY-MM-DD HH:mm:ss" type="datetimerange" value-format="YYYY-MM-DD HH:mm:ss" range-separator="-" start-placeholder="开始时间" end-placeholder="结束时间" />
         </el-form-item>
     </el-form>
+    <el-row justify="center" align="middle">
+        <el-button type="primary" :icon="Search" @click="getDataList">搜索</el-button>
+        <el-button :icon="Refresh" @click="resetQuery()">重置</el-button>
+    </el-row>
+    <el-divider border-style="dashed" />
 
     <!-- 数据展示区域 -->
     <el-space v-show="dataList.length > 0" wrap>
@@ -127,12 +136,19 @@
                         <el-text size="large" truncated>{{ item.title || '' }}</el-text>
                     </div>
                     <div class="card-header-desciption">
-                        <el-text size="small" line-clamp="2" truncated style="text-wrap: wrap">{{ item.description || '' }}</el-text>
+                        <el-text size="small" line-clamp="1" truncated style="text-wrap: wrap">创建人：{{ item.nickname || '' }}</el-text>
+                        <br />
+                        <el-text size="small" line-clamp="1" truncated style="text-wrap: wrap">创建时间：{{ item.createTime || '' }}</el-text>
                     </div>
                 </div>
             </template>
             <template #default>
-                <div style="text-align: center; width: 100%; height: 100%">
+                <div class="card-header-desciption">
+                    <el-tooltip :content="item.description || ''" :show-after="1500">
+                        <el-text size="small" line-clamp="2" truncated style="text-wrap: wrap">{{ item.description || '' }}</el-text>
+                    </el-tooltip>
+                </div>
+                <div style="text-align: center; width: 100%; height: calc(100% - 42px)">
                     <el-image v-if="item.cover" style="height: 160px" :src="'https://' + (item.cover || '')" :zoom-rate="1.2" :max-scale="7" :min-scale="0.2" :preview-src-list="['https://' + (item.cover || '')]" :hide-on-click-modal="true" fit="contain" />
                     <el-image v-else style="height: 160px" :src="'../../src/assets/images/code.png'" :zoom-rate="1.2" :max-scale="7" :min-scale="0.2" :preview-src-list="['../../src/assets/images/code.png']" :hide-on-click-modal="true" fit="contain" />
                 </div>

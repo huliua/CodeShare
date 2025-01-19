@@ -1,7 +1,7 @@
 <script setup>
     import { nextTick, onActivated } from 'vue';
     import CodeEditor from '@/components/CodeEditor/index.vue';
-    import { CirclePlus, Document, Folder, Remove } from '@element-plus/icons-vue';
+    import { CirclePlus, Document, Folder, RefreshLeft, Remove, UploadFilled } from '@element-plus/icons-vue';
     import { getUuid } from '@/utils/commonUtils';
     import { saveCodes } from '@/api/codeShare';
     import { useDictStore } from '@/store/dictStore.js';
@@ -553,8 +553,8 @@
             </el-form>
             <el-row justify="end">
                 <el-col style="text-align: right">
-                    <el-button type="primary" @click="submitForm">发布</el-button>
-                    <el-button @click="resetForm">重置</el-button>
+                    <el-button :icon="UploadFilled" type="success" @click="submitForm">发布</el-button>
+                    <el-button :icon="RefreshLeft" type="warning" @click="resetForm">重置</el-button>
                 </el-col>
             </el-row>
         </el-collapse-item>

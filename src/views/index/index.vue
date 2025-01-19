@@ -55,6 +55,12 @@
     <div class="main-content">
         <el-backtop :right="100" :bottom="100" :visibility-height="100" />
         <el-container>
+            <el-alert type="info" :closable="true" show-icon>
+                <template #title>
+                    <el-text>新功能投票入口：</el-text>
+                    <el-link type="primary" target="_blank" href="https://www.yuque.com/huliu_doc/codeshare/fbw88zcu5mst4o4s?singleDoc# 《CodeShare新功能预告》">点击进入</el-link>
+                </template>
+            </el-alert>
             <el-header>
                 <el-row :gutter="10">
                     <el-col :xs="5" :sm="6" :md="4" :lg="3" :xl="3">
