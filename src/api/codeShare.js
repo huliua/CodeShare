@@ -70,9 +70,12 @@ export function favourCode(params) {
     });
 }
 
-export function getCodeShare(id) {
+export function getCodeShare(id, accessToken) {
     return request({
         url: `/codeShare/getCodeShare/${id}`,
+        data: {
+            accessToken
+        },
         headers: {
             needToken: true
         },

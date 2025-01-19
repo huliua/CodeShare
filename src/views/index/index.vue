@@ -55,12 +55,18 @@
     <div class="main-content">
         <el-backtop :right="100" :bottom="100" :visibility-height="100" />
         <el-container>
+            <el-alert type="info" :closable="true" show-icon>
+                <template #title>
+                    <el-text>新功能投票入口：</el-text>
+                    <el-link type="primary" target="_blank" href="https://www.yuque.com/huliu_doc/codeshare/fbw88zcu5mst4o4s?singleDoc# 《CodeShare新功能预告》">点击进入</el-link>
+                </template>
+            </el-alert>
             <el-header>
                 <el-row :gutter="10">
                     <el-col :xs="5" :sm="6" :md="4" :lg="3" :xl="3">
                         <div class="app-title" @click="router.push('/')">CodeShare</div>
                     </el-col>
-                    <el-col :xs="14" :sm="12" :md="16" :lg="18" :xl="19">
+                    <el-col :xs="14" :sm="12" :md="16" :lg="18" :xl="18">
                         <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" :router="true">
                             <el-menu-item index="/index">
                                 <template #title>
@@ -99,15 +105,13 @@
                                     <el-icon>
                                         <ChatLineSquare />
                                     </el-icon>
-                                    联系我们
+                                    意见反馈
                                 </template>
-                                <el-menu-item index="" @click="goto('https://github.com/huliua')">Github</el-menu-item>
-                                <el-menu-item index="" @click="goto('https://gitee.com/githuliu')">Gitee</el-menu-item>
-                                <el-menu-item index="" @click="goto('https://www.cnblogs.com/huliua')">博客园</el-menu-item>
+                                <el-menu-item index="" @click="goto('https://github.com/huliua/CodeShare')">Github</el-menu-item>
                             </el-sub-menu>
                         </el-menu>
                     </el-col>
-                    <el-col :xs="5" :sm="6" :md="4" :lg="3" :xl="2">
+                    <el-col :xs="5" :sm="6" :md="4" :lg="3" :xl="3">
                         <div class="avatar">
                             <el-dropdown>
                                 <el-avatar style="background: transparent" :src="userStore?.userInfo.sex === '0' ? '/src/assets/images/female.png' : '/src/assets/images/male.png'"></el-avatar>
@@ -135,7 +139,7 @@
                     <keep-alive v-if="route.meta.keepAlive">
                         <component :is="Component" />
                     </keep-alive>
-                    <component v-else :is="Component" />
+                    <component :is="Component" v-else />
                 </router-view>
             </el-main>
             <el-footer>
