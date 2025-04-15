@@ -1,9 +1,9 @@
 <script setup>
     import { nextTick, onActivated } from 'vue';
     import CodeEditor from '@/components/CodeEditor/index.vue';
-    import { CirclePlus, Document, Folder, RefreshLeft, Remove, UploadFilled } from '@element-plus/icons-vue';
-    import { getUuid } from '@/utils/commonUtils';
-    import { saveCodes } from '@/api/codeShare';
+    import { CirclePlus, Document, Edit, Folder, RefreshLeft, Remove, FolderChecked, Upload, UploadFilled } from '@element-plus/icons-vue';
+    import { getUuid, isBlank } from '@/utils/commonUtils';
+    import { saveBaseInfo, saveCodeFiles } from '@/api/codeShare';
     import { useDictStore } from '@/store/dictStore.js';
 
     const dictStore = useDictStore();
@@ -52,6 +52,8 @@
         // 初始化字典数据
         tagOptions.value = await dictStore.getDict('t_tag');
     });
+
+    const activeStep = ref(1);
 
     /**
      * 选中文件/文件夹
@@ -198,6 +200,47 @@
         }
     }
 
+    function saveCodes(type) {
+        if (!moreSettingForm.value.id) {
+            ElMessage({
+                showClose: true,
+                message: '请先保存基本信息',
+                type: 'warning'
+            });
+            return;
+        }
+        // 文件信息
+        const fileList = [];
+        deepBuildTreeFile(fileList, fileTree.value);
+        // 为每个file设置infoId
+        fileList.forEach(file => {
+            file.infoId = moreSettingForm.value.id;
+        });
+
+        // 保存代码
+        saveCodeFiles(fileList).then(res => {
+            ElMessage({
+                showClose: true,
+                message: '保存成功',
+                type: 'success'
+            });
+
+            if (type === 1) {
+                // 重置数据
+                resetForm();
+                activeStep.value = 1;
+                fileTree.value = [];
+
+                // 跳转
+                if (moreSettingForm.value.id) {
+                    router.push({ path: `detail/${moreSettingForm.value.id}` });
+                } else {
+                    router.push('/my');
+                }
+            }
+        });
+    }
+
     /**
      * 提交表单
      */
@@ -211,11 +254,6 @@
             // 基本信息
             param.codeShareInfo = moreSettingForm.value;
 
-            // 文件信息
-            const fileList = [];
-            deepBuildTreeFile(fileList, fileTree.value);
-            param.codeShareFileList = fileList;
-
             // 标签信息
             const tags = [];
             var selected = moreSettingForm.value.tags || [];
@@ -227,24 +265,18 @@
             });
             param.tagList = tags;
 
-            // 保存代码
-            saveCodes(param).then(res => {
+            // 保存代码基本信息
+            saveBaseInfo(param).then(res => {
                 ElMessage({
                     showClose: true,
                     message: '保存成功',
                     type: 'success'
                 });
-
-                // 重置数据
-                resetForm();
-                fileTree.value = [];
-
-                // 跳转
-                if (res.msg) {
-                    router.push({ path: `detail/${res.data}` });
-                } else {
-                    router.push('/my');
-                }
+                console.log(res);
+                // 记录id
+                moreSettingForm.value.id = res.data;
+                // 跳转到下一步
+                activeStep.value++;
             });
         });
     }
@@ -457,12 +489,20 @@
 </script>
 
 <template>
-    <el-row class="main-content">
+    <el-steps :active="activeStep" align-center>
+        <el-step title="基本信息" :icon="Edit" />
+        <el-step title="代码文件" :icon="Upload" />
+    </el-steps>
+    <el-row v-show="activeStep === 2" class="main-content">
         <!-- 文件目录 -->
         <el-col :span="fileTree.length > 0 ? 10 : 24" class="file-tree">
             <el-row>
                 <el-col :span="24">
-                    <el-button :icon="CirclePlus" style="margin: 8px 4px" @click="append(null)">新增文件</el-button>
+                    <el-button color="#626aef" :icon="CirclePlus" style="margin: 8px 0px 8px 4px" @click="append(null)">新增文件</el-button>
+                    <el-button type="primary" @click="activeStep--">上一步</el-button>
+                    <el-button :icon="FolderChecked" type="info" @click="saveCodes(0)">暂存</el-button>
+                    <el-button :icon="UploadFilled" type="success" @click="saveCodes(1)">提交</el-button>
+
                     <el-tree
                         ref="treeRef"
                         :highlight-current="true"
@@ -517,8 +557,8 @@
     </el-row>
 
     <!-- 代码基本信息 -->
-    <el-collapse :model-value="['baseInfo']">
-        <el-collapse-item title="基本信息" name="baseInfo">
+    <el-row v-show="activeStep === 1">
+        <el-col :span="24">
             <el-form ref="moreSettingFormRef" :model="moreSettingForm" :rules="moreSettingFormRules" label-width="100px" :inline="false" :size="'default'">
                 <el-form-item label="标题" prop="title">
                     <el-input v-model="moreSettingForm.title" autocomplete="off" placeholder="请输入标题" />
@@ -553,12 +593,13 @@
             </el-form>
             <el-row justify="end">
                 <el-col style="text-align: right">
-                    <el-button :icon="UploadFilled" type="success" @click="submitForm">发布</el-button>
+                    <el-button v-if="!isBlank(moreSettingForm.id)" type="primary" @click="activeStep++">下一步</el-button>
+                    <el-button :icon="UploadFilled" type="success" @click="submitForm">保存并下一步</el-button>
                     <el-button :icon="RefreshLeft" type="warning" @click="resetForm">重置</el-button>
                 </el-col>
             </el-row>
-        </el-collapse-item>
-    </el-collapse>
+        </el-col>
+    </el-row>
 
     <!-- 添加文件/文件夹弹窗 -->
     <el-dialog v-model="dialogFormVisible" :title="dialogFormTitle" width="500">

@@ -1,9 +1,23 @@
 import request from '@/utils/request';
 
 /**
- * 保存代码
+ * 保存代码基本信息
  */
-export function saveCodes(param) {
+export function saveBaseInfo(param) {
+    return request({
+        url: '/codeShare/saveBaseInfo',
+        headers: {
+            needToken: true
+        },
+        method: 'post',
+        data: param
+    });
+}
+
+/**
+ * 保存代码文件信息
+ */
+export function saveCodeFiles(param) {
     return request({
         url: '/codeShare/saveCodes',
         headers: {
