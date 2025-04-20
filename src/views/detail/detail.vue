@@ -1,9 +1,9 @@
 <script setup>
     import { markRaw, nextTick, onMounted } from 'vue';
     import CodeEditor from '@/components/CodeEditor/index.vue';
-    import { Back, CirclePlus, Delete, Document, DocumentAdd, Edit, EditPen, Folder, FolderAdd, FolderChecked, RefreshLeft, Remove, Share, Upload, UploadFilled } from '@element-plus/icons-vue';
-    import { getUuid } from '@/utils/commonUtils';
-    import { deleteCode, getCodeShare, saveBaseInfo, saveCodeFiles } from '@/api/codeShare';
+    import { Back, CirclePlus, CloseBold, Delete, Document, DocumentAdd, Edit, EditPen, Folder, FolderAdd, FolderChecked, Management, RefreshLeft, Remove, Share, Upload, UploadFilled } from '@element-plus/icons-vue';
+    import { extractTemplateVariables, getUuid, isBlank } from '@/utils/commonUtils';
+    import { deleteCode, getCodeShare, saveBaseInfo, saveCodeFiles, saveTemplates } from '@/api/codeShare';
     import { useRoute, useRouter } from 'vue-router';
     import { useDictStore } from '@/store/dictStore.js';
     import { ClickOutside as vClickOutside } from 'element-plus';
@@ -29,15 +29,35 @@
     const lang = ref('');
     const currentFileId = ref('');
 
-    // 当前步骤
+    // 当前步骤（默认为代码页面）
     const activeStep = ref(1);
+
+    const allSteps = computed(() => {
+        const steps = [
+            {
+                title: '基本信息',
+                icon: Edit
+            },
+            {
+                title: '代码文件',
+                icon: Upload
+            }
+        ];
+        if (infoForm.value.isTemplate === '1') {
+            steps.push({
+                title: '模板设置',
+                icon: Management
+            });
+        }
+        return steps;
+    });
 
     // 弹窗表单
     const form = ref({});
     const rules = ref({
         name: [
             { required: true, message: '请输入文件/文件夹名称', trigger: 'blur' },
-            { min: 1, max: 25, message: '文件/文件夹名称长度为1-25', trigger: 'blur' }
+            { min: 1, max: 100, message: '文件/文件夹名称长度为1-100', trigger: 'blur' }
         ],
         type: [{ required: true, message: '请输入文件/文件夹名称', trigger: 'blur' }]
     });
@@ -47,9 +67,9 @@
     const dialogFormTitle = ref('新增');
 
     // 更多设置
-    const moreSettingFormRef = ref(null);
-    const moreSettingForm = ref({});
-    const moreSettingFormRules = ref({
+    const infoFormRef = ref(null);
+    const infoForm = ref({});
+    const infoFormRules = ref({
         title: [
             { required: true, message: '请输入标题', trigger: 'blur' },
             { min: 1, max: 20, message: '标题长度为1-20', trigger: 'blur' }
@@ -81,8 +101,9 @@
         // 获取
         getCodeShare(id.value, accessToken.value).then(res => {
             fileTree.value = buildFileTree(res.data.codeShareFileList || []);
-            moreSettingForm.value = res.data.codeShareInfoVo || {};
-            moreSettingForm.value.tags = (res.data.tagList || []).map(item => ((tagOptions.value || []).some(tag => tag.code === item.code) ? item.code : item.name));
+            templateFields.value = res.data.templateList || [];
+            infoForm.value = res.data.codeShareInfoVo || {};
+            infoForm.value.tags = (res.data.tagList || []).map(item => ((tagOptions.value || []).some(tag => tag.code === item.code) ? item.code : item.name));
         });
 
         // 获取数据后添加一个短暂延时，确保树节点完全渲染
@@ -348,13 +369,25 @@
         }
     }
 
-    function saveCodes() {
+    /**
+     * 保存代码信息
+     * @param type 保存类型 0：保存 1保存并下一步
+     */
+    function saveCodes(type) {
+        if (!infoForm.value.id) {
+            ElMessage({
+                showClose: true,
+                message: '请先保存基本信息',
+                type: 'warning'
+            });
+            return;
+        }
         // 文件信息
         const fileList = [];
         deepBuildTreeFile(fileList, fileTree.value);
         // 为每个file设置infoId
         fileList.forEach(file => {
-            file.infoId = moreSettingForm.value.id;
+            file.infoId = infoForm.value.id;
         });
 
         // 保存代码
@@ -364,6 +397,10 @@
                 message: '保存成功',
                 type: 'success'
             });
+
+            if (type === 1) {
+                activeStep.value++;
+            }
         });
     }
 
@@ -371,21 +408,21 @@
      * 提交表单
      */
     function submitForm() {
-        moreSettingFormRef.value.validate(valid => {
+        infoFormRef.value.validate(valid => {
             if (!valid) {
                 return false;
             }
 
             const param = {};
             // 基本信息
-            param.codeShareInfo = moreSettingForm.value;
+            param.codeShareInfo = infoForm.value;
             if (id.value) {
                 param.codeShareInfo.id = id.value;
             }
 
             // 标签信息
             const tags = [];
-            const selected = moreSettingForm.value.tags || [];
+            const selected = infoForm.value.tags || [];
             selected.forEach(tag => {
                 tags.push({
                     code: (tagOptions.value || []).find(item => item.code === tag)?.code || '',
@@ -412,7 +449,7 @@
      * 重置表单
      */
     function resetForm() {
-        moreSettingFormRef.value.resetFields();
+        infoFormRef.value.resetFields();
     }
 
     /**
@@ -629,14 +666,227 @@
                 return markRaw(Document);
         }
     };
+
+    const formRefs = ref({});
+    const templateFields = ref([]);
+    const templateFieldsRules = ref({
+        name: [
+            { required: true, message: '请输入字段名', trigger: 'blur' },
+            { min: 1, max: 100, message: '长度在 1 到 100 个字符', trigger: 'blur' }
+        ],
+        type: [{ required: true, message: '请选择字段类型', trigger: 'blur' }]
+    });
+
+    /**
+     * 自动生成模板字段信息
+     */
+    function autoGenTemplate() {
+        const fileList = [];
+        deepBuildTreeFile(fileList, fileTree.value);
+
+        if (fileList.length === 0) {
+            ElMessage({
+                showClose: true,
+                message: '请先维护代码文件',
+                type: 'warning'
+            });
+            return;
+        }
+
+        const templateFieldsTemp = [];
+        const templateFieldsMap = {};
+        let index = 1;
+        fileList.forEach(file => {
+            // 先判断文件名中是否包含模板字段
+            if (file.name && /\$\{[^}]+}/.test(file.name)) {
+                const templateVariables = extractTemplateVariables(file.name);
+                // 循环保存模板变量
+                templateVariables.forEach(variable => {
+                    if (isBlank(templateFieldsMap[variable])) {
+                        templateFieldsMap[variable] = '1';
+                        templateFieldsTemp.push({
+                            infoId: infoForm.value.id,
+                            name: variable,
+                            type: 'text',
+                            description: '',
+                            required: 1,
+                            sort: index++
+                        });
+                    }
+                });
+            }
+            if (file.content && /\$\{[^}]+}/.test(file.content)) {
+                const templateVariables = extractTemplateVariables(file.content);
+                templateVariables.forEach(variable => {
+                    if (isBlank(templateFieldsMap[variable])) {
+                        templateFieldsMap[variable] = '1';
+                        templateFieldsTemp.push({
+                            infoId: infoForm.value.id,
+                            name: variable,
+                            type: 'text',
+                            description: '',
+                            required: 1,
+                            sort: index++
+                        });
+                    }
+                });
+            }
+        });
+        if (templateFieldsTemp.length === 0) {
+            ElMessage({
+                showClose: true,
+                message: '没有发现模板变量，请检查是否正确按照“${变量名}”的格式维护代码模板！',
+                type: 'warning'
+            });
+            return;
+        }
+
+        // 将templateFieldsTemp数据合并到templateFields.value中
+        const templateFieldsFinal = [];
+        templateFieldsTemp.forEach(item => {
+            // 如果templateFields中存在该字段，就直接取templateFields中的字段信息
+            if (templateFields.value.some(item2 => item2.name === item.name)) {
+                templateFieldsFinal.push(Object.assign({}, templateFields.value.filter(item2 => item2.name === item.name)[0], item.sort));
+            } else {
+                templateFieldsFinal.push(item);
+            }
+        });
+        templateFields.value = templateFieldsFinal;
+    }
+
+    const validateAllForms = () => {
+        return new Promise(async (resolve, reject) => {
+            let valid = true;
+            for (const item of templateFields.value) {
+                const formRef = formRefs.value['templateFormRef' + item.name];
+                if (formRef) {
+                    await formRef.validate(isValid => {
+                        if (!isValid) {
+                            valid = false;
+                        }
+                    });
+                }
+            }
+            if (valid) {
+                resolve();
+            } else {
+                reject();
+            }
+        });
+    };
+
+    /**
+     * 保存代码模板信息
+     * @param type 保存类型，0：保存，1：保存并下一步
+     */
+    function saveTemplate(type) {
+        if (!infoForm.value.id) {
+            ElMessage({
+                showClose: true,
+                message: '请先保存基本信息',
+                type: 'warning'
+            });
+            return;
+        }
+        if (templateFields.value.length === 0) {
+            if (type === 0) {
+                ElMessage({
+                    showClose: true,
+                    message: '请先维护模板字段',
+                    type: 'warning'
+                });
+            } else if (type === 1) {
+                // 直接跳转到下一步
+                activeStep.value++;
+            }
+            return;
+        }
+        validateAllForms()
+            .then(() => {
+                // 保存模板信息
+                saveTemplates(templateFields.value).then(res => {
+                    ElMessage({
+                        showClose: true,
+                        message: '保存成功',
+                        type: 'success'
+                    });
+
+                    if (type === 1) {
+                        activeStep.value++;
+                    }
+                });
+            })
+            .catch(err => {
+                ElMessage({
+                    showClose: true,
+                    message: '表单校验失败，请检查输入',
+                    type: 'error'
+                });
+            });
+    }
+
+    function removeTemplateFields(name) {
+        if (readOnly.value) {
+            return;
+        }
+        // 从templateFields中移除name属性为name的对象
+        templateFields.value = templateFields.value.filter(item => item.name !== name);
+    }
 </script>
 
 <template>
-    <el-steps :active="activeStep" align-center>
-        <el-step title="基本信息" :icon="Edit" />
-        <el-step title="代码文件" :icon="Upload" />
+    <el-steps :active="activeStep" align-center style="margin: 0 0 18px" :finish-status="'success'">
+        <el-step v-for="(item, index) in allSteps" :key="index" :title="item.title" :icon="item.icon" />
     </el-steps>
-    <el-row v-show="activeStep === 2" class="main-content">
+
+    <!-- 代码基本信息 -->
+    <el-row v-show="activeStep === 0">
+        <el-col :span="24">
+            <el-form ref="infoFormRef" :model="infoForm" :rules="infoFormRules" label-width="100px" :inline="false" :size="'default'" :disabled="readOnly">
+                <el-form-item label="标题" prop="title">
+                    <el-input v-model="infoForm.title" autocomplete="off" placeholder="请输入标题" />
+                </el-form-item>
+                <el-form-item label="描述" prop="description">
+                    <el-input v-model="infoForm.description" type="textarea" autocomplete="off" placeholder="请输入描述" />
+                </el-form-item>
+                <el-form-item label="可见性" prop="visibility">
+                    <el-select v-model="infoForm.visibility" placeholder="请选择可见性" clearable>
+                        <template #label="{ label, value }">
+                            <span>{{ label }}:</span>
+                            <span style="font-weight: bold">{{ value }}</span>
+                        </template>
+                        <el-option label="公开" value="public" selected />
+                        <el-option label="私密" value="private" />
+                        <el-option label="加密" value="cryptographic" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="是否模板代码" prop="isTemplate">
+                    <el-switch v-model="infoForm.isTemplate" inline-prompt active-text="是" inactive-text="否" active-value="1" inactive-value="0" />
+                </el-form-item>
+                <el-form-item v-if="infoForm.visibility === 'cryptographic'" label="密码" prop="password">
+                    <el-input v-model="infoForm.password" type="password" show-password autocomplete="off" placeholder="请输入密码" />
+                </el-form-item>
+                <el-form-item label="标签" prop="tags">
+                    <el-select v-model="infoForm.tags" multiple filterable clearable allow-create default-first-option placeholder="请选择标签">
+                        <el-option v-for="item in tagOptions" :key="item.code" :label="item.name" :value="item.code" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="封面" prop="cover">
+                    <el-input v-model="infoForm.cover" autocomplete="off" placeholder="请输入封面链接">
+                        <template #prepend>http(s)://</template>
+                    </el-input>
+                </el-form-item>
+            </el-form>
+            <el-row justify="end">
+                <el-col style="text-align: right">
+                    <el-button v-if="!isBlank(infoForm.id)" type="success" @click="activeStep++">下一步</el-button>
+                    <el-button v-if="!readOnly" :icon="UploadFilled" type="primary" @click="submitForm">保存并下一步</el-button>
+                    <el-button v-if="!readOnly" :icon="RefreshLeft" type="warning" @click="resetForm">重置</el-button>
+                </el-col>
+            </el-row>
+        </el-col>
+    </el-row>
+    <el-row v-show="activeStep === 1" class="main-content">
         <!-- 右键菜单 -->
         <ul v-show="showContextMenu" ref="target" v-click-outside="clickOutSide" :style="{ left: left + 'px', top: top + 'px' }" class="contextMenu">
             <li @click="renameNode">
@@ -652,56 +902,67 @@
                 <el-button link :icon="DocumentAdd">新建文件</el-button>
             </li>
         </ul>
+        <el-col :span="24" style="margin-bottom: 20px">
+            <el-row>
+                <el-button v-if="!readOnly" color="#626aef" :icon="CirclePlus" @click="append(null)">新增文件</el-button>
+                <el-button type="warning" @click="activeStep--">上一步</el-button>
+                <el-button v-if="!readOnly" :icon="FolderChecked" type="info" @click="saveCodes(0)">保存</el-button>
+                <el-button v-if="!readOnly" :icon="UploadFilled" type="success" @click="saveCodes(1)">保存并下一步</el-button>
+                <el-button v-else type="success" @click="activeStep++">下一步</el-button>
+                <el-button :icon="Back" @click="goBack">返回</el-button>
+            </el-row>
+        </el-col>
         <!-- 文件目录 -->
         <el-col :span="fileTree.length > 0 ? 10 : 24" class="file-tree">
             <el-row>
                 <el-col :span="24">
-                    <el-button v-if="!readOnly" :icon="CirclePlus" style="margin: 8px 4px" @click="append(null)">新增文件</el-button>
-                    <el-button type="primary" @click="activeStep--">上一步</el-button>
-                    <el-button v-if="!readOnly" :icon="UploadFilled" type="success" @click="saveCodes">保存</el-button>
-                    <el-tree
-                        ref="treeRef"
-                        :highlight-current="true"
-                        style="max-width: 98%"
-                        :data="fileTree"
-                        :node-key="'id'"
-                        default-expand-all
-                        :expand-on-click-node="false"
-                        draggable
-                        :allow-drag="allowDrag"
-                        :allow-drop="allowDrop"
-                        @node-drag-start="handleDragStart"
-                        @node-drag-enter="handleDragEnter"
-                        @node-drag-leave="handleDragLeave"
-                        @node-drag-over="handleDragOver"
-                        @node-drag-end="handleDragEnd"
-                        @node-drop="handleDrop"
-                        @node-click="doSelect"
-                        @node-contextmenu="treeNodeRightClick"
-                    >
-                        <template #default="{ node, data }">
-                            <span class="custom-tree-node">
-                                <span class="file-tree-node-label">
-                                    <el-icon :class="data.type === 'folder' ? 'folder-icon' : 'file-icon'">
-                                        <Folder v-if="data.type === 'folder'" />
-                                        <component :is="getFileIcon(data.name)" v-else />
-                                    </el-icon>
-                                    <span>{{ data.name }}</span>
-                                </span>
-                                <span v-if="!readOnly" class="action-buttons">
-                                    <el-icon v-if="data.type === 'folder'" @click.stop="append(node)">
-                                        <CirclePlus />
-                                    </el-icon>
-                                    <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
-                                        <Remove />
-                                    </el-icon>
-                                </span>
-                            </span>
-                        </template>
-                        <template #empty>
-                            <el-empty :image-size="200" description="请添加文件或文件夹" />
-                        </template>
-                    </el-tree>
+                    <el-space :wrap="true" :direction="'vertical'">
+                        <el-row>
+                            <el-tree
+                                ref="treeRef"
+                                :highlight-current="true"
+                                style="max-width: 98%"
+                                :data="fileTree"
+                                :node-key="'id'"
+                                default-expand-all
+                                :expand-on-click-node="false"
+                                draggable
+                                :allow-drag="allowDrag"
+                                :allow-drop="allowDrop"
+                                @node-drag-start="handleDragStart"
+                                @node-drag-enter="handleDragEnter"
+                                @node-drag-leave="handleDragLeave"
+                                @node-drag-over="handleDragOver"
+                                @node-drag-end="handleDragEnd"
+                                @node-drop="handleDrop"
+                                @node-click="doSelect"
+                                @node-contextmenu="treeNodeRightClick"
+                            >
+                                <template #default="{ node, data }">
+                                    <span class="custom-tree-node">
+                                        <span class="file-tree-node-label">
+                                            <el-icon :class="data.type === 'folder' ? 'folder-icon' : 'file-icon'">
+                                                <Folder v-if="data.type === 'folder'" />
+                                                <component :is="getFileIcon(data.name)" v-else />
+                                            </el-icon>
+                                            <span>{{ data.name }}</span>
+                                        </span>
+                                        <span v-if="!readOnly" class="action-buttons">
+                                            <el-icon v-if="data.type === 'folder'" @click.stop="append(node)">
+                                                <CirclePlus />
+                                            </el-icon>
+                                            <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
+                                                <Remove />
+                                            </el-icon>
+                                        </span>
+                                    </span>
+                                </template>
+                                <template #empty>
+                                    <el-empty :image-size="200" description="请添加文件或文件夹" />
+                                </template>
+                            </el-tree>
+                        </el-row>
+                    </el-space>
                 </el-col>
             </el-row>
         </el-col>
@@ -715,51 +976,58 @@
         </el-col>
     </el-row>
 
-    <!-- 代码基本信息 -->
-    <el-row v-show="activeStep === 1">
+    <el-row v-show="allSteps.length === 3 && activeStep === 2">
         <el-col :span="24">
-            <el-form ref="moreSettingFormRef" :model="moreSettingForm" :rules="moreSettingFormRules" label-width="100px" :inline="false" :size="'default'" :disabled="readOnly">
-                <el-form-item label="标题" prop="title">
-                    <el-input v-model="moreSettingForm.title" autocomplete="off" placeholder="请输入标题" />
-                </el-form-item>
-                <el-form-item label="描述" prop="description">
-                    <el-input v-model="moreSettingForm.description" type="textarea" autocomplete="off" placeholder="请输入描述" />
-                </el-form-item>
-                <el-form-item label="可见性" prop="visibility">
-                    <el-select v-model="moreSettingForm.visibility" placeholder="请选择可见性" clearable>
-                        <template #label="{ label, value }">
-                            <span>{{ label }}:</span>
-                            <span style="font-weight: bold">{{ value }}</span>
+            <el-row>
+                <el-button type="warning" @click="activeStep--">上一步</el-button>
+                <el-button v-if="!readOnly" type="primary" @click="autoGenTemplate">生成模版字段</el-button>
+                <el-button v-if="!readOnly" :icon="FolderChecked" type="info" @click="saveTemplate(0)">保存</el-button>
+                <el-button v-if="!readOnly" :icon="UploadFilled" type="success" @click="saveTemplate(1)">保存并下一步</el-button>
+                <el-button v-else type="success" @click="activeStep++">下一步</el-button>
+            </el-row>
+        </el-col>
+        <el-col :span="24">
+            <el-row v-show="templateFields.length > 0" wrap style="width: 100%" :gutter="20">
+                <el-col v-for="item in templateFields" :key="item.name" :span="12" style="margin-top: 20px">
+                    <el-card>
+                        <template #header>
+                            <el-row justify="end">
+                                <el-button v-show="!readOnly" type="danger" size="small" circle :icon="CloseBold" class="delete-circle-icon" @click="removeTemplateFields(item.name)" />
+                            </el-row>
                         </template>
-                        <el-option label="公开" value="public" selected />
-                        <el-option label="私密" value="private" />
-                        <el-option label="加密" value="cryptographic" />
-                    </el-select>
-                </el-form-item>
-                <el-form-item v-if="moreSettingForm.visibility === 'cryptographic'" label="密码" prop="password">
-                    <el-input v-model="moreSettingForm.password" type="password" show-password autocomplete="off" placeholder="请输入密码" />
-                </el-form-item>
-                <el-form-item label="标签" prop="tags">
-                    <el-select v-model="moreSettingForm.tags" multiple filterable clearable allow-create default-first-option placeholder="请选择标签">
-                        <el-option v-for="item in tagOptions" :key="item.code" :label="item.name" :value="item.code" />
-                    </el-select>
-                </el-form-item>
-                <el-form-item label="封面" prop="cover">
-                    <el-input v-model="moreSettingForm.cover" autocomplete="off" placeholder="请输入封面链接" :formatter="value => value.replace(/^https?:\/\//, '')" :parser="value => value.replace(/^https?:\/\//, '')">
-                        <template #prepend>http(s)://</template>
-                    </el-input>
-                </el-form-item>
-            </el-form>
-            <el-row justify="end">
-                <el-col style="text-align: right">
-                    <el-button type="primary" @click="activeStep++">下一步</el-button>
-                    <el-button v-if="!readOnly" :icon="UploadFilled" type="success" @click="submitForm">保存并下一步</el-button>
-                    <el-button v-if="!readOnly" :icon="RefreshLeft" type="warning" @click="resetForm">重置</el-button>
-                    <el-button v-if="!readOnly" :icon="Delete" type="danger" @click="confirmVisible = true">删除</el-button>
-                    <el-button v-if="!route.meta.readonly" :icon="Share" type="primary" @click="handleShare">分享</el-button>
-                    <el-button :icon="Back" @click="goBack">返回</el-button>
+                        <el-form :ref="el => (formRefs['templateFormRef' + item.name] = el)" label-width="auto" :model="item" :disabled="readOnly" :rules="templateFieldsRules">
+                            <el-form-item label="标识名" prop="name">
+                                <el-input v-model="item.name" disabled />
+                            </el-form-item>
+                            <el-form-item label="类型" prop="type">
+                                <el-select v-model="item.type" placeholder="请选择标识类型">
+                                    <el-option label="文本框" value="text" />
+                                    <el-option label="开关" value="switcher" />
+                                    <el-option label="单选框" value="select" />
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="描述信息" prop="description">
+                                <el-input v-model="item.description" />
+                            </el-form-item>
+                            <el-form-item label="是否必填" prop="required">
+                                <el-switch v-model="item.required" :active-value="1" :inactive-value="0" />
+                            </el-form-item>
+                        </el-form>
+                    </el-card>
                 </el-col>
             </el-row>
+            <el-empty v-show="templateFields.length === 0" description="暂无数据" />
+        </el-col>
+    </el-row>
+
+    <el-row v-show="allSteps.length === activeStep">
+        <el-col :span="24">
+            <el-result icon="success" :title="readOnly ? '查看完成' : '保存完成'">
+                <template #extra>
+                    <el-button type="warning" @click="activeStep--">上一步</el-button>
+                    <el-button type="primary" @click="goBack">完成</el-button>
+                </template>
+            </el-result>
         </el-col>
     </el-row>
 
@@ -816,20 +1084,24 @@
 </template>
 
 <style scoped lang="scss">
+    .delete-circle-icon {
+        width: 18px;
+        height: 18px;
+    }
     .main-content {
         display: flex;
         flex-direction: row;
         align-items: flex-start;
         justify-content: space-between;
         box-sizing: border-box;
-        height: calc(100vh - 160px);
+        height: calc(100vh - 242px);
         min-height: 400px;
         padding: 20px;
     }
 
     .file-tree,
     .code-editor {
-        height: 100%;
+        height: calc(100% - 52px);
     }
 
     .custom-tree-node {

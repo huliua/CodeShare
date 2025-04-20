@@ -29,6 +29,20 @@ export function saveCodeFiles(param) {
 }
 
 /**
+ * 保存代码模板信息
+ */
+export function saveTemplates(param) {
+    return request({
+        url: '/codeShare/saveTemplates',
+        headers: {
+            needToken: true
+        },
+        method: 'post',
+        data: param
+    });
+}
+
+/**
  * 查看代码库
  */
 export function getCodesList(param) {

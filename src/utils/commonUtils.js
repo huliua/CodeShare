@@ -76,3 +76,22 @@ export function encryptByRsa(str, publicKey) {
     crypt.setPublicKey(publicKey);
     return crypt.encrypt(str);
 }
+
+/**
+ * 提取模板变量的函数
+ * @param str 待提取的字符串
+ * @returns {*[]}
+ */
+export function extractTemplateVariables(str) {
+    const regex = /\$\{([^}]+)\}/g;
+    let match;
+    const matches = [];
+
+    // 查找所有匹配项
+    while ((match = regex.exec(str)) !== null) {
+        // match[1] 是捕获组的内容
+        matches.push(match[1]);
+    }
+
+    return matches;
+}
