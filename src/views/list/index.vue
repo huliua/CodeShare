@@ -1,9 +1,11 @@
 <script setup>
     import { Refresh, Search, Star, StarFilled } from '@element-plus/icons-vue';
-    import { favourCode, getCodesList } from '@/api/codeShare';
+    import { favourCode, genCode, getCodesList } from '@/api/codeShare';
     import { useRouter } from 'vue-router';
     import { onActivated } from 'vue';
     import { useDictStore } from '@/store/dictStore.js';
+    import GenCodeDialog from '@/components/GenCodeDialog/index.vue';
+    import ShowCodeDialog from '@/components/ShowCodeDialog/index.vue';
 
     const dictStore = useDictStore();
     const router = useRouter();
@@ -97,6 +99,30 @@
     onActivated(() => {
         getDataList();
     });
+
+    defineOptions({
+        name: 'List' // 必须设置 name 属性
+    });
+
+    // 生成代码相关
+    const genCodeDialogVisible = ref(false);
+    const genCodeId = ref('');
+    const showTemplateField = function (item) {
+        genCodeId.value = item.id;
+        genCodeDialogVisible.value = true;
+    };
+    // 展示代码相关
+    const showCodeDialogVisible = ref(false);
+    const codeFiles = ref([]);
+    const doGenCode = function (formVal) {
+        console.log(formVal);
+        genCodeDialogVisible.value = false;
+        showCodeDialogVisible.value = true;
+        genCode(genCodeId.value, formVal).then(res => {
+            ElMessage.success('生成成功');
+            codeFiles.value = res.data;
+        });
+    };
 </script>
 
 <template>
@@ -111,8 +137,14 @@
                 <el-option v-for="dict in tagDictList" :key="dict.code" :label="dict.name" :value="dict.code" />
             </el-select>
         </el-form-item>
+        <el-form-item label="是否代码模板" prop="isTemplate">
+            <el-select v-model="queryParams.isTemplate" multiple placeholder="请选择标签" clearable style="width: 150px">
+                <el-option label="是" value="1" />
+                <el-option label="否" value="0" />
+            </el-select>
+        </el-form-item>
         <el-form-item label="创建人昵称" prop="nickname">
-            <el-input v-model="queryParams.nickname" placeholder="请输入创建人昵称" clearable style="width: 200px" @keyup.enter="getDataList" />
+            <el-input v-model="queryParams.nickname" placeholder="请输入创建人昵称" clearable style="width: 150px" @keyup.enter="getDataList" />
         </el-form-item>
         <el-form-item label="创建时间" prop="createTime">
             <el-date-picker v-model="queryParams.createTime" is-range format="YYYY-MM-DD HH:mm:ss" type="datetimerange" value-format="YYYY-MM-DD HH:mm:ss" range-separator="-" start-placeholder="开始时间" end-placeholder="结束时间" />
@@ -133,7 +165,9 @@
             <template #header>
                 <div class="card-header">
                     <div class="card-header-title">
-                        <el-text size="large" truncated>{{ item.title || '' }}</el-text>
+                        <el-text size="large" truncated :type="item.isTemplate !== '1' ? 'primary' : 'success'">
+                            {{ item.title || '' }}
+                        </el-text>
                     </div>
                     <div class="card-header-desciption">
                         <el-text size="small" line-clamp="1" truncated style="text-wrap: wrap">创建人：{{ item.nickname || '' }}</el-text>
@@ -162,6 +196,7 @@
                                 </el-icon>
                             </template>
                         </el-button>
+                        <el-button v-if="item.isTemplate === '1'" link color="var(--el-color-primary-dark-2)" @click="showTemplateField(item)">生成</el-button>
                         <el-button link color="var(--el-color-primary-dark-2)" @click="goDetail(item)">查看</el-button>
                     </div>
                 </div>
@@ -174,6 +209,9 @@
         </el-col>
     </el-row>
     <el-empty v-show="dataList.length === 0" description="暂无数据" />
+
+    <GenCodeDialog v-model:visible="genCodeDialogVisible" :info-id="genCodeId" @submit="doGenCode"></GenCodeDialog>
+    <ShowCodeDialog v-model:visible="showCodeDialogVisible" :code-files="codeFiles" />
 </template>
 
 <style scoped>

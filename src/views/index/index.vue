@@ -16,6 +16,21 @@
     // 默认选中菜单项
     const activeIndex = computed(() => route.fullPath);
 
+    const keepAliveInclude = ref([]);
+    // 监听路由变化，动态更新 include 数组
+    watch(
+        () => route.fullPath, // 监听 fullPath 或 route.name
+        (newPath, oldPath) => {
+            const newRoute = route; // 当前路由对象
+
+            // 如果当前路由需要缓存，且组件名称不在 include 中，则添加
+            if (newRoute.meta?.keepAlive && !keepAliveInclude.value.includes(newRoute.name)) {
+                keepAliveInclude.value.push(newRoute.name);
+            }
+        },
+        { immediate: true } // 立即执行初始化
+    );
+
     /**
      * 跳转到指定页面
      */
@@ -136,10 +151,9 @@
             </el-header>
             <el-main class="main">
                 <router-view v-slot="{ Component, route }">
-                    <keep-alive v-if="route.meta.keepAlive">
-                        <component :is="Component" />
+                    <keep-alive :include="keepAliveInclude">
+                        <component :is="Component" :key="route.fullPath" />
                     </keep-alive>
-                    <component :is="Component" v-else />
                 </router-view>
             </el-main>
             <el-footer>

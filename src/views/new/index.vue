@@ -767,21 +767,27 @@
                     >
                         <template #default="{ node, data }">
                             <span class="custom-tree-node">
-                                <span class="file-tree-node-label">
-                                    <el-icon :class="data.type === 'folder' ? 'folder-icon' : 'file-icon'">
-                                        <Folder v-if="data.type === 'folder'" />
-                                        <component :is="getFileIcon(data.name)" v-else />
-                                    </el-icon>
-                                    <span>{{ data.name }}</span>
-                                </span>
-                                <span class="action-buttons">
-                                    <el-icon v-if="data.type === 'folder'" @click.stop="append(node)">
-                                        <CirclePlus />
-                                    </el-icon>
-                                    <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
-                                        <Remove />
-                                    </el-icon>
-                                </span>
+                                <el-row style="width: 98%">
+                                    <el-col :span="20">
+                                        <span class="file-tree-node-label">
+                                            <el-icon :class="data.type === 'folder' ? 'folder-icon' : 'file-icon'">
+                                                <Folder v-if="data.type === 'folder'" />
+                                                <component :is="getFileIcon(data.name)" v-else />
+                                            </el-icon>
+                                            <el-text truncated>{{ data.name }}</el-text>
+                                        </span>
+                                    </el-col>
+                                    <el-col :span="4">
+                                        <span class="action-buttons">
+                                            <el-icon v-if="data.type === 'folder'" @click.stop="append(node)">
+                                                <CirclePlus />
+                                            </el-icon>
+                                            <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
+                                                <Remove />
+                                            </el-icon>
+                                        </span>
+                                    </el-col>
+                                </el-row>
                             </span>
                         </template>
                         <template #empty>
@@ -925,6 +931,7 @@
         justify-content: space-between;
         padding: 4px 8px;
         font-size: 14px;
+        max-width: calc(100% - 24px);
     }
 
     .file-tree-node-label {

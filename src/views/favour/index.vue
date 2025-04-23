@@ -98,6 +98,10 @@
     onActivated(() => {
         getDataList();
     });
+
+    defineOptions({
+        name: 'Favour'
+    });
 </script>
 
 <template>
@@ -112,8 +116,14 @@
                 <el-option v-for="dict in tagDictList" :key="dict.code" :label="dict.name" :value="dict.code" />
             </el-select>
         </el-form-item>
+        <el-form-item label="是否代码模板" prop="isTemplate">
+            <el-select v-model="queryParams.isTemplate" multiple placeholder="请选择标签" clearable style="width: 150px">
+                <el-option label="是" value="1" />
+                <el-option label="否" value="0" />
+            </el-select>
+        </el-form-item>
         <el-form-item label="创建人昵称" prop="nickname">
-            <el-input v-model="queryParams.nickname" placeholder="请输入创建人昵称" clearable style="width: 200px" @keyup.enter="getDataList" />
+            <el-input v-model="queryParams.nickname" placeholder="请输入创建人昵称" clearable style="width: 150px" @keyup.enter="getDataList" />
         </el-form-item>
         <el-form-item label="创建时间" prop="createTime">
             <el-date-picker v-model="queryParams.createTime" is-range format="YYYY-MM-DD HH:mm:ss" type="datetimerange" value-format="YYYY-MM-DD HH:mm:ss" range-separator="-" start-placeholder="开始时间" end-placeholder="结束时间" />
@@ -134,7 +144,7 @@
             <template #header>
                 <div class="card-header">
                     <div class="card-header-title">
-                        <el-text size="large" truncated>{{ item.title || '' }}</el-text>
+                        <el-text size="large" truncated :type="item.isTemplate !== '1' ? 'primary' : 'success'">{{ item.title || '' }}</el-text>
                     </div>
                     <div class="card-header-desciption">
                         <el-text size="small" line-clamp="1" truncated style="text-wrap: wrap">创建人：{{ item.nickname || '' }}</el-text>
@@ -163,6 +173,7 @@
                                 </el-icon>
                             </template>
                         </el-button>
+                        <el-button v-if="item.isTemplate === '1'" link color="var(--el-color-primary-dark-2)" @click="genCode(item)">生成</el-button>
                         <el-button link color="var(--el-color-primary-dark-2)" @click="goDetail(item)">查看</el-button>
                     </div>
                 </div>

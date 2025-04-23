@@ -1,7 +1,7 @@
 <script setup>
     import { markRaw, nextTick, onMounted } from 'vue';
     import CodeEditor from '@/components/CodeEditor/index.vue';
-    import { Back, CirclePlus, CloseBold, Delete, Document, DocumentAdd, Edit, EditPen, Folder, FolderAdd, FolderChecked, Management, RefreshLeft, Remove, Share, Upload, UploadFilled } from '@element-plus/icons-vue';
+    import { Back, CirclePlus, CloseBold, Delete, Document, DocumentAdd, Edit, EditPen, Folder, FolderAdd, FolderChecked, Management, RefreshLeft, Remove, Upload, UploadFilled } from '@element-plus/icons-vue';
     import { extractTemplateVariables, getUuid, isBlank } from '@/utils/commonUtils';
     import { deleteCode, getCodeShare, saveBaseInfo, saveCodeFiles, saveTemplates } from '@/api/codeShare';
     import { useRoute, useRouter } from 'vue-router';
@@ -61,7 +61,6 @@
         ],
         type: [{ required: true, message: '请输入文件/文件夹名称', trigger: 'blur' }]
     });
-    const formLabelWidth = '100px';
     const formRef = ref(null);
     const dialogFormVisible = ref(false);
     const dialogFormTitle = ref('新增');
@@ -916,53 +915,57 @@
         <el-col :span="fileTree.length > 0 ? 10 : 24" class="file-tree">
             <el-row>
                 <el-col :span="24">
-                    <el-space :wrap="true" :direction="'vertical'">
-                        <el-row>
-                            <el-tree
-                                ref="treeRef"
-                                :highlight-current="true"
-                                style="max-width: 98%"
-                                :data="fileTree"
-                                :node-key="'id'"
-                                default-expand-all
-                                :expand-on-click-node="false"
-                                draggable
-                                :allow-drag="allowDrag"
-                                :allow-drop="allowDrop"
-                                @node-drag-start="handleDragStart"
-                                @node-drag-enter="handleDragEnter"
-                                @node-drag-leave="handleDragLeave"
-                                @node-drag-over="handleDragOver"
-                                @node-drag-end="handleDragEnd"
-                                @node-drop="handleDrop"
-                                @node-click="doSelect"
-                                @node-contextmenu="treeNodeRightClick"
-                            >
-                                <template #default="{ node, data }">
-                                    <span class="custom-tree-node">
-                                        <span class="file-tree-node-label">
-                                            <el-icon :class="data.type === 'folder' ? 'folder-icon' : 'file-icon'">
-                                                <Folder v-if="data.type === 'folder'" />
-                                                <component :is="getFileIcon(data.name)" v-else />
-                                            </el-icon>
-                                            <span>{{ data.name }}</span>
-                                        </span>
-                                        <span v-if="!readOnly" class="action-buttons">
-                                            <el-icon v-if="data.type === 'folder'" @click.stop="append(node)">
-                                                <CirclePlus />
-                                            </el-icon>
-                                            <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
-                                                <Remove />
-                                            </el-icon>
-                                        </span>
-                                    </span>
-                                </template>
-                                <template #empty>
-                                    <el-empty :image-size="200" description="请添加文件或文件夹" />
-                                </template>
-                            </el-tree>
-                        </el-row>
-                    </el-space>
+                    <el-row>
+                        <el-tree
+                            ref="treeRef"
+                            :highlight-current="true"
+                            style="width: 98%"
+                            :data="fileTree"
+                            :node-key="'id'"
+                            default-expand-all
+                            :expand-on-click-node="false"
+                            draggable
+                            :allow-drag="allowDrag"
+                            :allow-drop="allowDrop"
+                            @node-drag-start="handleDragStart"
+                            @node-drag-enter="handleDragEnter"
+                            @node-drag-leave="handleDragLeave"
+                            @node-drag-over="handleDragOver"
+                            @node-drag-end="handleDragEnd"
+                            @node-drop="handleDrop"
+                            @node-click="doSelect"
+                            @node-contextmenu="treeNodeRightClick"
+                        >
+                            <template #default="{ node, data }">
+                                <span class="custom-tree-node">
+                                    <el-row style="width: 98%">
+                                        <el-col :span="20">
+                                            <span class="file-tree-node-label">
+                                                <el-icon :class="data.type === 'folder' ? 'folder-icon' : 'file-icon'">
+                                                    <Folder v-if="data.type === 'folder'" />
+                                                    <component :is="getFileIcon(data.name)" v-else />
+                                                </el-icon>
+                                                <el-text truncated>{{ data.name }}</el-text>
+                                            </span>
+                                        </el-col>
+                                        <el-col :span="4">
+                                            <span v-if="!readOnly" class="action-buttons">
+                                                <el-icon v-if="data.type === 'folder'" @click.stop="append(node)">
+                                                    <CirclePlus />
+                                                </el-icon>
+                                                <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
+                                                    <Remove />
+                                                </el-icon>
+                                            </span>
+                                        </el-col>
+                                    </el-row>
+                                </span>
+                            </template>
+                            <template #empty>
+                                <el-empty :image-size="200" description="请添加文件或文件夹" />
+                            </template>
+                        </el-tree>
+                    </el-row>
                 </el-col>
             </el-row>
         </el-col>
@@ -995,7 +998,7 @@
                                 <el-button v-show="!readOnly" type="danger" size="small" circle :icon="CloseBold" class="delete-circle-icon" @click="removeTemplateFields(item.name)" />
                             </el-row>
                         </template>
-                        <el-form :ref="el => (formRefs['templateFormRef' + item.name] = el)" label-width="auto" :model="item" :disabled="readOnly" :rules="templateFieldsRules">
+                        <el-form :ref="el => (formRefs['templateFormRef' + item.name] = el)" label-width="100px" :model="item" :disabled="readOnly" :rules="templateFieldsRules">
                             <el-form-item label="标识名" prop="name">
                                 <el-input v-model="item.name" disabled />
                             </el-form-item>
@@ -1034,10 +1037,10 @@
     <!-- 添加文件/文件夹弹窗 -->
     <el-dialog v-model="dialogFormVisible" :title="dialogFormTitle" width="500">
         <el-form ref="formRef" :model="form" :rules="rules" label-position="left">
-            <el-form-item label="文件名" :label-width="formLabelWidth" prop="name">
+            <el-form-item label="文件名" label-width="100px" prop="name">
                 <el-input v-model="form.name" autocomplete="off" @keydown.enter.prevent="save" />
             </el-form-item>
-            <el-form-item label="文件类型" :label-width="formLabelWidth" prop="type">
+            <el-form-item label="文件类型" label-width="100px" prop="type">
                 <el-select v-model="form.type" placeholder="请选择文件类型">
                     <el-option label="文件" value="file" />
                     <el-option label="文件夹" value="folder" />
@@ -1055,7 +1058,7 @@
     <!-- 重命名弹窗 -->
     <el-dialog v-model="renameDialogVisible" title="重命名" width="500">
         <el-form ref="formRef" :model="form" :rules="rules" label-position="left">
-            <el-form-item label="文件名" :label-width="formLabelWidth" prop="name">
+            <el-form-item label="文件名" label-width="100px" prop="name">
                 <el-input v-model="form.name" autocomplete="off" @keydown.enter.prevent="doRename" />
             </el-form-item>
         </el-form>
@@ -1211,7 +1214,7 @@
 
         .el-tree-node {
             position: relative;
-            padding: 4px 0;
+            padding: 4px 0 0;
         }
 
         .el-tree-node__content {
@@ -1234,6 +1237,7 @@
         justify-content: space-between;
         padding: 4px 8px;
         font-size: 14px;
+        max-width: calc(100% - 24px);
     }
 
     .file-tree-node-label {

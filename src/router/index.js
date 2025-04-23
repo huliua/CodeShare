@@ -26,7 +26,7 @@ const constantRoutes = [
                 }
             },
             {
-                name: 'list',
+                name: 'List',
                 path: '/list',
                 component: () => import('@/views/list/index.vue'),
                 meta: {
@@ -36,7 +36,7 @@ const constantRoutes = [
                 }
             },
             {
-                name: 'my',
+                name: 'My',
                 path: '/my',
                 component: () => import('@/views/myCode/index.vue'),
                 meta: {
@@ -46,7 +46,7 @@ const constantRoutes = [
                 }
             },
             {
-                name: 'favour',
+                name: 'Favour',
                 path: '/favour',
                 component: () => import('@/views/favour/index.vue'),
                 meta: {

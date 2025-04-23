@@ -120,3 +120,24 @@ export function deleteCode(id) {
         method: 'post'
     });
 }
+
+export function getTemplateFields(id) {
+    return request({
+        url: `/codeShare/getTemplateFields/${id}`,
+        headers: {
+            needToken: true
+        },
+        method: 'post'
+    });
+}
+
+export function genCode(id, templateFields) {
+    return request({
+        url: `/codeShare/genCode/${id}`,
+        headers: {
+            needToken: true
+        },
+        data: templateFields,
+        method: 'post'
+    });
+}
