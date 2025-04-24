@@ -1,9 +1,11 @@
 <script setup>
     import { Refresh, Search, Star, StarFilled } from '@element-plus/icons-vue';
-    import { favourCode, getMyFavourList } from '@/api/codeShare';
+    import { favourCode, genCode, getMyFavourList } from '@/api/codeShare';
     import { useRouter } from 'vue-router';
     import { onActivated } from 'vue';
     import { useDictStore } from '@/store/dictStore.js';
+    import ShowCodeDialog from '@/components/ShowCodeDialog/index.vue';
+    import GenCodeDialog from '@/components/GenCodeDialog/index.vue';
 
     const dictStore = useDictStore();
     const router = useRouter();
@@ -102,6 +104,26 @@
     defineOptions({
         name: 'Favour'
     });
+
+    // 生成代码相关
+    const genCodeDialogVisible = ref(false);
+    const genCodeId = ref('');
+    const showTemplateField = function (item) {
+        genCodeId.value = item.id;
+        genCodeDialogVisible.value = true;
+    };
+    // 展示代码相关
+    const showCodeDialogVisible = ref(false);
+    const codeFiles = ref([]);
+    const doGenCode = function (formVal) {
+        console.log(formVal);
+        genCodeDialogVisible.value = false;
+        showCodeDialogVisible.value = true;
+        genCode(genCodeId.value, formVal).then(res => {
+            ElMessage.success('生成成功');
+            codeFiles.value = res.data;
+        });
+    };
 </script>
 
 <template>
@@ -173,7 +195,7 @@
                                 </el-icon>
                             </template>
                         </el-button>
-                        <el-button v-if="item.isTemplate === '1'" link color="var(--el-color-primary-dark-2)" @click="genCode(item)">生成</el-button>
+                        <el-button v-if="item.isTemplate === '1'" link color="var(--el-color-primary-dark-2)" @click="showTemplateField(item)">生成</el-button>
                         <el-button link color="var(--el-color-primary-dark-2)" @click="goDetail(item)">查看</el-button>
                     </div>
                 </div>
@@ -186,6 +208,9 @@
         </el-col>
     </el-row>
     <el-empty v-show="dataList.length === 0" description="暂无数据" />
+
+    <GenCodeDialog v-model:visible="genCodeDialogVisible" :info-id="genCodeId" @submit="doGenCode"></GenCodeDialog>
+    <ShowCodeDialog v-model:visible="showCodeDialogVisible" :code-files="codeFiles" />
 </template>
 
 <style scoped>

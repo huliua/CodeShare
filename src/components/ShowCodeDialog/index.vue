@@ -151,14 +151,14 @@
 </script>
 
 <template>
-    <el-dialog v-model="visible" title="代码信息" draggable :lock-scroll="true" style="height: 70%" :body-class="'show-code-dialog-body-class'" @close="visible = false">
+    <el-dialog v-model="visible" open-delay="1000" title="代码信息" width="60%" draggable :lock-scroll="true" style="height: 70%" :body-class="'show-code-dialog-body-class'" @close="visible = false">
         <el-row class="main-content">
             <!-- 文件目录 -->
             <el-col :span="treeFile.length > 0 ? 10 : 24" class="file-tree">
                 <el-row>
                     <el-col :span="24">
                         <el-row>
-                            <el-tree ref="treeRef" :highlight-current="true" style="max-width: 98%" :data="treeFile" :node-key="'id'" default-expand-all :expand-on-click-node="false" draggable @node-click="doSelect">
+                            <el-tree ref="treeRef" :highlight-current="true" style="width: 98%" :data="treeFile" :node-key="'id'" default-expand-all :expand-on-click-node="false" draggable @node-click="doSelect">
                                 <template #default="{ data }">
                                     <span class="custom-tree-node">
                                         <el-row style="width: 98%">
