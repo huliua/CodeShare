@@ -151,7 +151,7 @@
 </script>
 
 <template>
-    <el-dialog v-model="visible" open-delay="1000" title="代码信息" width="60%" draggable :lock-scroll="true" style="height: 70%" :body-class="'show-code-dialog-body-class'" @close="visible = false">
+    <el-dialog v-model="visible" :open-delay="100" title="代码信息" width="60%" draggable :lock-scroll="true" style="height: 80%" :body-class="'show-code-dialog-body-class'" @close="visible = false">
         <el-row class="main-content">
             <!-- 文件目录 -->
             <el-col :span="treeFile.length > 0 ? 10 : 24" class="file-tree">

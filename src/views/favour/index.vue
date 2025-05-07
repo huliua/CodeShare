@@ -116,12 +116,11 @@
     const showCodeDialogVisible = ref(false);
     const codeFiles = ref([]);
     const doGenCode = function (formVal) {
-        console.log(formVal);
         genCodeDialogVisible.value = false;
-        showCodeDialogVisible.value = true;
         genCode(genCodeId.value, formVal).then(res => {
             ElMessage.success('生成成功');
             codeFiles.value = res.data;
+            showCodeDialogVisible.value = true;
         });
     };
 </script>
