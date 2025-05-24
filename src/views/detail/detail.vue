@@ -1,7 +1,7 @@
 <script setup>
     import { markRaw, nextTick, onMounted } from 'vue';
     import CodeEditor from '@/components/CodeEditor/index.vue';
-    import { Back, CirclePlus, CloseBold, Delete, Document, DocumentAdd, Edit, EditPen, Folder, FolderAdd, FolderChecked, Management, RefreshLeft, Remove, Upload, UploadFilled } from '@element-plus/icons-vue';
+    import { Back, CirclePlus, CloseBold, Delete, Document, DocumentAdd, Edit, EditPen, Folder, FolderAdd, FolderChecked, Management, RefreshLeft, Remove, SortDown, SortUp, Upload, UploadFilled } from '@element-plus/icons-vue';
     import { extractTemplateVariables, getUuid, isBlank } from '@/utils/commonUtils';
     import { deleteCode, getCodeShare, saveBaseInfo, saveCodeFiles, saveTemplates } from '@/api/codeShare';
     import { useRoute, useRouter } from 'vue-router';
@@ -157,7 +157,7 @@
     const renameDialogVisible = ref(false);
 
     function treeNodeRightClick(event, data, node, instance) {
-        if (readOnly) {
+        if (readOnly.value) {
             return;
         }
         left.value = event.clientX + 15;
@@ -708,8 +708,7 @@
                             name: variable,
                             type: 'text',
                             description: '',
-                            required: 1,
-                            sort: index++
+                            required: 1
                         });
                     }
                 });
@@ -724,8 +723,7 @@
                             name: variable,
                             type: 'text',
                             description: '',
-                            required: 1,
-                            sort: index++
+                            required: 1
                         });
                     }
                 });
@@ -743,15 +741,21 @@
         // 将templateFieldsTemp数据合并到templateFields.value中
         const templateFieldsFinal = [];
         templateFieldsTemp.forEach(item => {
-            // 如果templateFields中存在该字段，就直接取templateFields中的字段信息
-            if (templateFields.value.some(item2 => item2.name === item.name)) {
-                templateFieldsFinal.push(Object.assign({}, templateFields.value.filter(item2 => item2.name === item.name)[0], item.sort));
-            } else {
+            if (!existsFields(item.name)) {
                 templateFieldsFinal.push(item);
             }
         });
-        templateFields.value = templateFieldsFinal;
+        templateFieldsFinal.forEach(item => {
+            templateFields.value.push(item);
+        });
     }
+
+    const existsFields = function (fieldName) {
+        // 先判断普通字段中是否包含该字段
+        if (templateFields.value.some(item => item.name === fieldName)) {
+            return true;
+        }
+    };
 
     const validateAllForms = () => {
         return new Promise(async (resolve, reject) => {
@@ -802,6 +806,11 @@
         }
         validateAllForms()
             .then(() => {
+                // 设置每个字段排序
+                let index = 1;
+                for (const item of templateFields.value) {
+                    item.sort = index++;
+                }
                 // 保存模板信息
                 saveTemplates(templateFields.value).then(res => {
                     ElMessage({
@@ -822,6 +831,37 @@
                     type: 'error'
                 });
             });
+    }
+
+    /**
+     * 排序字段
+     * @param name 字段名称
+     * @param type 类型，up：向上，down：向下
+     */
+    function sortFields(name, type) {
+        if (readOnly.value) {
+            return;
+        }
+        // 先处理普通字段
+        for (let index = 0; index < templateFields.value.length; index++) {
+            let item = templateFields.value[index];
+            if (item.name === name) {
+                if (type === 'up') {
+                    if (index > 0) {
+                        const temp = templateFields.value[index - 1];
+                        templateFields.value[index - 1] = templateFields.value[index];
+                        templateFields.value[index] = temp;
+                    }
+                } else if (type === 'down') {
+                    if (index < templateFields.value.length - 1) {
+                        const temp = templateFields.value[index + 1];
+                        templateFields.value[index + 1] = templateFields.value[index];
+                        templateFields.value[index] = temp;
+                    }
+                }
+                break;
+            }
+        }
     }
 
     function removeTemplateFields(name) {
@@ -889,16 +929,16 @@
         <!-- 右键菜单 -->
         <ul v-show="showContextMenu" ref="target" v-click-outside="clickOutSide" :style="{ left: left + 'px', top: top + 'px' }" class="contextMenu">
             <li @click="renameNode">
-                <el-button link :icon="EditPen">重命名</el-button>
+                <el-button type="info" link :icon="EditPen">重命名</el-button>
             </li>
             <li @click="remove(null, currentNodeData)">
                 <el-button type="danger" link :icon="Delete">删除</el-button>
             </li>
             <li v-if="currentNodeData?.type === 'folder'" @click="append(currentNodeData, { type: 'folder' })">
-                <el-button link :icon="FolderAdd">新建文件夹</el-button>
+                <el-button type="info" link :icon="FolderAdd">新建文件夹</el-button>
             </li>
             <li v-if="currentNodeData?.type === 'folder'" @click="append(currentNodeData, { type: 'file' })">
-                <el-button link :icon="DocumentAdd">新建文件</el-button>
+                <el-button type="info" link :icon="DocumentAdd">新建文件</el-button>
             </li>
         </ul>
         <el-col :span="24" style="margin-bottom: 20px">
@@ -994,8 +1034,16 @@
                 <el-col v-for="item in templateFields" :key="item.name" :span="12" style="margin-top: 20px">
                     <el-card>
                         <template #header>
-                            <el-row justify="end">
-                                <el-button v-show="!readOnly" type="danger" size="small" circle :icon="CloseBold" class="delete-circle-icon" @click="removeTemplateFields(item.name)" />
+                            <el-row justify="start">
+                                <el-col :span="12">
+                                    <el-button v-show="!readOnly" size="small" text circle :icon="SortDown" class="edit-circle-icon" @click="sortFields(item.name, 'down')"></el-button>
+                                    <el-button v-show="!readOnly" size="small" text circle :icon="SortUp" class="edit-circle-icon" @click="sortFields(item.name, 'up')"></el-button>
+                                </el-col>
+                                <el-col :span="12">
+                                    <el-row justify="end">
+                                        <el-button v-show="!readOnly" type="danger" size="small" circle :icon="CloseBold" class="delete-circle-icon" @click="removeTemplateFields(item.name)" />
+                                    </el-row>
+                                </el-col>
                             </el-row>
                         </template>
                         <el-form :ref="el => (formRefs['templateFormRef' + item.name] = el)" label-width="100px" :model="item" :disabled="readOnly" :rules="templateFieldsRules">

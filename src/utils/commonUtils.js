@@ -83,7 +83,7 @@ export function encryptByRsa(str, publicKey) {
  * @returns {*[]}
  */
 export function extractTemplateVariables(str) {
-    const regex = /\$\{([^}]+)\}/g;
+    const regex = /\$\{([^\?}]+)(\?.*)?\}/g;
     let match;
     const matches = [];
 
