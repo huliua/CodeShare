@@ -1,13 +1,16 @@
 <script setup>
-    import { nextTick, onActivated } from 'vue';
+    import { nextTick, onActivated, ref, computed, markRaw } from 'vue';
+    import FileManagement from '@/components/FileManagement/index.vue';
     import CodeEditor from '@/components/CodeEditor/index.vue';
-    import { CirclePlus, Document, Edit, Folder, RefreshLeft, Remove, FolderChecked, Upload, UploadFilled, Management, CloseBold } from '@element-plus/icons-vue';
+    import { CirclePlus, Document, Edit, Folder, RefreshLeft, Remove, FolderChecked, Upload, UploadFilled, Management, CloseBold, Back } from '@element-plus/icons-vue';
     import { extractTemplateVariables, getUuid, isBlank } from '@/utils/commonUtils';
     import { saveBaseInfo, saveCodeFiles, saveTemplates } from '@/api/codeShare';
     import { useDictStore } from '@/store/dictStore.js';
 
     const dictStore = useDictStore();
     const router = useRouter();
+    const fileManagementRef = ref(null);
+
     // 文件目录树形结构
     const treeRef = ref(null);
     const fileTree = ref([]);
@@ -76,18 +79,25 @@
     });
     const activeStep = ref(0);
 
+    const formRefs = ref({});
+    const templateFields = ref([]);
+    const templateFieldsRules = ref({
+        name: [
+            { required: true, message: '请输入字段名', trigger: 'blur' },
+            { min: 1, max: 100, message: '长度在 1 到 100 个字符', trigger: 'blur' }
+        ],
+        type: [{ required: true, message: '请选择字段类型', trigger: 'blur' }]
+    });
+
     /**
      * 选中文件/文件夹
      * @param {Object} data - 当前选择的节点的对象。
      */
-    function doSelect(data) {
-        // 先把代码编辑器隐藏
-        codeEditorVisible.value = false;
-        if (data.type === 'file') {
-            // 获取文件内容
-            codes.value = data.content || '';
-            currentFileId.value = data.id;
-            let fileExtention = data.name.split('.')[1] || '';
+    function handleFileSelect(selectedFile) {
+        if (selectedFile) {
+            codes.value = selectedFile.content || '';
+            currentFileId.value = selectedFile.id;
+            let fileExtention = selectedFile.name.split('.')[1] || '';
             switch (fileExtention) {
                 case 'js':
                     lang.value = 'javascript';
@@ -130,95 +140,15 @@
             }
             codeEditorVisible.value = true;
         } else {
+            codeEditorVisible.value = false;
             codes.value = '';
             lang.value = '';
+            currentFileId.value = '';
         }
     }
 
-    /**
-     * 添加一个新节点到文件树中。
-     * @param {Object} node - 当前选择的节点的对象。
-     */
-    function append(node, defaultData) {
-        // 弹窗显示form
-        this.dialogFormVisible = true;
-        // 设置表单的标题为"新增"
-        this.dialogFormTitle = '新增';
-        // 重置表单
-        this.form = {
-            id: getUuid(),
-            parentId: node?.key,
-            type: 'file',
-            children: [],
-            // 获取当前层级的最大排序值+1
-            sort: getMaxSort(node) + 1
-        };
-        parentNode.value = node;
-        // 清除表单的验证结果
-        nextTick(() => {
-            if (formRef.value) {
-                formRef.value.resetFields();
-            }
-        });
-    }
-
-    // 获取指定节点下的最大排序值
-    function getMaxSort(node) {
-        if (!node) {
-            // 如果是根节点，则从fileTree中获取
-            return Math.max(0, ...fileTree.value.map(item => item.sort || 0));
-        }
-        // 如果是子节点，则从node的children中获取
-        const children = node.childNodes || [];
-        return Math.max(0, ...children.map(child => child.data.sort || 0));
-    }
-
-    /**
-     * 保存新节点到文件树中。
-     */
-    function save() {
-        // 表单验证
-        formRef.value.validate(valid => {
-            if (!valid) {
-                return false;
-            }
-            treeRef.value.append(form.value, parentNode.value ? parentNode.value : null);
-            parentNode.value = null;
-            // 关闭弹窗
-            dialogFormVisible.value = false;
-        });
-    }
-
-    /**
-     * 从文件树中移除指定的节点。
-     * @param {Object} node - 要移除的节点的对象。
-     * @param {Object} data - 包含节点信息的对象，用于查找要移除的节点。
-     */
-    function remove(node, data) {
-        treeRef.value.remove(data);
-        // 如果文件树中不存在当前编辑器打开的文件，则取消显示代码编辑器
-        nextTick(() => {
-            const currentNode = treeRef.value.getNode(currentFileId.value);
-            if (!currentNode) {
-                codeEditorVisible.value = false;
-                currentFileId.value = '';
-                codes.value = '';
-                lang.value = '';
-            }
-        });
-    }
-
-    /**
-     * 处理代码内容变化
-     * @param {String} content 文件内容
-     */
-    function handleCodeChange(content) {
-        // 获取当前选择的文件
-        let selectedNode = treeRef.value.getCurrentNode();
-        if (selectedNode) {
-            // 更新文件内容
-            selectedNode.content = content;
-        }
+    function handleFileTreeChange(newFileTree) {
+        fileTree.value = newFileTree;
     }
 
     /**
@@ -236,7 +166,9 @@
         }
         // 文件信息
         const fileList = [];
-        deepBuildTreeFile(fileList, fileTree.value);
+        if (fileManagementRef.value) {
+            fileManagementRef.value.deepBuildTreeFile(fileList, fileManagementRef.value.getFileTree());
+        }
         // 为每个file设置infoId
         fileList.forEach(file => {
             file.infoId = infoForm.value.id;
@@ -319,221 +251,11 @@
         infoFormRef.value.resetFields();
     }
 
-    function deepBuildTreeFile(fileList, treeFileList, parentId = null) {
-        if (!treeFileList) return;
-
-        treeFileList.forEach(file => {
-            if (!file) return;
-
-            const treeFile = {
-                id: file.id,
-                name: file.name,
-                parentId: parentId || '',
-                type: file.type,
-                content: file.content,
-                sort: file.sort || 0 // 确保排序值被保存
-            };
-            fileList.push(treeFile);
-            if (file.children && file.children.length > 0) {
-                deepBuildTreeFile(fileList, file.children, file.id);
-            }
-        });
-    }
-
-    // 控制是否允许拖拽
-    const allowDrag = node => {
-        return true;
-    };
-
-    // 控制拖拽规则
-    const allowDrop = (draggingNode, dropNode, type) => {
-        // 不允许拖拽到文件节点下
-        if (dropNode.data.type === 'file' && type === 'inner') {
-            return false;
-        }
-        return true;
-    };
-
-    // 开始拖拽时的处理
-    const handleDragStart = (node, ev) => {
-        console.log('drag start', node);
-    };
-
-    // 拖拽进入目标节点时的处理
-    const handleDragEnter = (draggingNode, dropNode, ev) => {
-        console.log('tree drag enter: ', dropNode.label);
-    };
-
-    // 拖拽离开目标节点时的处理
-    const handleDragLeave = (draggingNode, dropNode, ev) => {
-        console.log('tree drag leave: ', dropNode.label);
-    };
-
-    // 拖拽经过目标节点时的处理
-    const handleDragOver = (draggingNode, dropNode, ev) => {
-        console.log('tree drag over: ', dropNode.label);
-    };
-
-    // 拖拽结束时的处理
-    const handleDragEnd = (draggingNode, dropNode, dropType, ev) => {
-        console.log('tree drag end: ', dropType);
-    };
-
-    // 处理拖拽完成事件
-    const handleDrop = (draggingNode, dropNode, type) => {
-        // 获取拖拽节点的父节点
-        const draggingParentNode = draggingNode.parent;
-        const dropParentNode = type === 'inner' ? dropNode : dropNode.parent;
-
-        // 更新所有受影响节点的排序值
-        const updateNodesSort = parentNode => {
-            if (!parentNode) {
-                // 如果是根节点，直接更新 fileTree
-                const rootNodes = treeRef.value.store.nodesMap;
-                const rootNodesList = Object.values(rootNodes)
-                    .filter(node => !node.parent || !node.parent.data)
-                    .sort((a, b) => a.level - b.level);
-
-                rootNodesList.forEach((node, index) => {
-                    if (node.data) {
-                        node.data.sort = index + 1;
-                    }
-                });
-                return;
-            }
-
-            // 获取父节点下的所有子节点
-            const children = parentNode.childNodes || [];
-
-            // 按照当前顺序重新设置排序值
-            children.forEach((node, index) => {
-                if (node.data) {
-                    node.data.sort = index + 1;
-                }
-            });
-        };
-
-        // 更新拖拽节点的父节点下所有子节点的排序
-        updateNodesSort(draggingParentNode);
-
-        // 如果是跨父节点拖拽,还需要更新目标父节点下的排序
-        if (dropParentNode !== draggingParentNode) {
-            updateNodesSort(dropParentNode);
-        }
-
-        // 如果是拖拽到根级别，需要更新根节点的排序
-        if (!dropParentNode) {
-            updateNodesSort(null);
-        }
-
-        // 更新节点的parentId
-        if (type === 'inner') {
-            draggingNode.data.parentId = dropNode.data.id;
-        } else {
-            draggingNode.data.parentId = dropNode.parent ? dropNode.parent.data.id : '';
-        }
-
-        // 重新构建树
-        const allNodes = [];
-        const getAllNodes = nodes => {
-            if (!nodes) return;
-            nodes.forEach(node => {
-                const nodeData = { ...node };
-                delete nodeData.children;
-                allNodes.push(nodeData);
-                if (node.children && node.children.length > 0) {
-                    getAllNodes(node.children);
-                }
-            });
-        };
-
-        getAllNodes(fileTree.value);
-        fileTree.value = buildFileTree(allNodes);
-
-        // 确保视图更新
-        nextTick(() => {
-            treeRef.value?.setCurrentKey(draggingNode.data.id);
-        });
-    };
-
-    /**
-     * 将数组中的数据，构建成树形结构
-     * @param {Array} data - 需要构建树形结构的数组
-     */
-    function buildFileTree(data) {
-        if (!data || data.length === 0) return [];
-
-        let temp = [...data];
-        // 先过滤出根节点并排序
-        let root = temp.filter(item => !item.parentId || item.parentId === '').sort((a, b) => (a.sort || 0) - (b.sort || 0));
-
-        // 循环根节点，从根节点开始构建树形结构
-        root.forEach(item => {
-            setNodeChildren(item, temp);
-        });
-        return root;
-    }
-
-    /**
-     * 递归函数，用户为节点设置子节点
-     * @param {Object} node - 当前节点
-     * @param dataArr
-     * @type {Array} dataArr - 所有节点的数组
-     */
-    function setNodeChildren(node, dataArr) {
-        if (!node || !dataArr) return;
-
-        // 获取当前节点的子节点并排序
-        let children = dataArr.filter(item => item.parentId === node.id).sort((a, b) => (a.sort || 0) - (b.sort || 0));
-
-        if (children.length > 0) {
-            node.children = children;
-            // 递归为子节点设置子节点
-            children.forEach(item => {
-                setNodeChildren(item, dataArr);
-            });
-        }
-    }
-
-    // 根据文件扩展名返回对应的图标组件
-    const getFileIcon = fileName => {
-        const ext = fileName.split('.').pop()?.toLowerCase();
-        switch (ext) {
-            case 'js':
-                return markRaw(Document); // 使用 markRaw 避免不必要的响应式包装
-            case 'html':
-                return markRaw(Document);
-            case 'css':
-                return markRaw(Document);
-            case 'json':
-                return markRaw(Document);
-            case 'md':
-                return markRaw(Document);
-            case 'py':
-                return markRaw(Document);
-            case 'java':
-                return markRaw(Document);
-            default:
-                return markRaw(Document);
-        }
-    };
-
-    const formRefs = ref({});
-    const templateFields = ref([]);
-    const templateFieldsRules = ref({
-        name: [
-            { required: true, message: '请输入字段名', trigger: 'blur' },
-            { min: 1, max: 100, message: '长度在 1 到 100 个字符', trigger: 'blur' }
-        ],
-        type: [{ required: true, message: '请选择字段类型', trigger: 'blur' }]
-    });
-
-    /**
-     * 自动生成模板字段信息
-     */
     function autoGenTemplate() {
         const fileList = [];
-        deepBuildTreeFile(fileList, fileTree.value);
+        if (fileManagementRef.value) {
+            fileManagementRef.value.deepBuildTreeFile(fileList, fileManagementRef.value.getFileTree());
+        }
 
         if (fileList.length === 0) {
             ElMessage({
@@ -586,7 +308,7 @@
         if (templateFieldsTemp.length === 0) {
             ElMessage({
                 showClose: true,
-                message: '没有发现模板变量，请检查是否正确按照“${变量名}”的格式维护代码模板！',
+                message: '没有发现模板变量，请检查是否正确按照"${变量名}"的格式维护代码模板！',
                 type: 'warning'
             });
             return;
@@ -680,6 +402,12 @@
         // 从templateFields中移除name属性为name的对象
         templateFields.value = templateFields.value.filter(item => item.name !== name);
     }
+
+    function callAppendInChild() {
+        if (fileManagementRef.value) {
+            fileManagementRef.value.append(null);
+        }
+    }
 </script>
 
 <template>
@@ -736,71 +464,16 @@
     </el-row>
 
     <el-row v-show="activeStep === 1" class="main-content">
-        <!-- 文件目录 -->
-        <el-col :span="fileTree.length > 0 ? 10 : 24" class="file-tree">
+        <el-col :span="24" style="margin-bottom: 20px; width: 100%">
             <el-row>
-                <el-col :span="24">
-                    <el-button color="#626aef" :icon="CirclePlus" @click="append(null)">新增文件</el-button>
-                    <el-button type="warning" @click="activeStep--">上一步</el-button>
-                    <el-button :icon="FolderChecked" type="info" @click="saveCodes(0)">保存</el-button>
-                    <el-button :icon="UploadFilled" type="success" @click="saveCodes(1)">保存并下一步</el-button>
-
-                    <el-tree
-                        ref="treeRef"
-                        :highlight-current="true"
-                        style="max-width: 98%"
-                        :data="fileTree"
-                        :node-key="'id'"
-                        default-expand-all
-                        :expand-on-click-node="false"
-                        :props="{ label: 'name', children: 'children', class: 'file-tree-node' }"
-                        draggable
-                        :allow-drag="allowDrag"
-                        :allow-drop="allowDrop"
-                        @node-drag-start="handleDragStart"
-                        @node-drag-enter="handleDragEnter"
-                        @node-drag-leave="handleDragLeave"
-                        @node-drag-over="handleDragOver"
-                        @node-drag-end="handleDragEnd"
-                        @node-drop="handleDrop"
-                        @node-click="doSelect"
-                    >
-                        <template #default="{ node, data }">
-                            <span class="custom-tree-node">
-                                <el-row style="width: 98%">
-                                    <el-col :span="20">
-                                        <span class="file-tree-node-label">
-                                            <el-icon :class="data.type === 'folder' ? 'folder-icon' : 'file-icon'">
-                                                <Folder v-if="data.type === 'folder'" />
-                                                <component :is="getFileIcon(data.name)" v-else />
-                                            </el-icon>
-                                            <el-text truncated>{{ data.name }}</el-text>
-                                        </span>
-                                    </el-col>
-                                    <el-col :span="4">
-                                        <span class="action-buttons">
-                                            <el-icon v-if="data.type === 'folder'" @click.stop="append(node)">
-                                                <CirclePlus />
-                                            </el-icon>
-                                            <el-icon style="margin-left: 8px" @click.stop="remove(node, data)">
-                                                <Remove />
-                                            </el-icon>
-                                        </span>
-                                    </el-col>
-                                </el-row>
-                            </span>
-                        </template>
-                        <template #empty>
-                            <el-empty :image-size="200" description="请添加文件或文件夹" />
-                        </template>
-                    </el-tree>
-                </el-col>
+                <el-button color="#626aef" :icon="CirclePlus" @click="callAppendInChild">新增文件/夹</el-button>
+                <el-button type="warning" @click="activeStep--">上一步</el-button>
+                <el-button :icon="FolderChecked" type="info" @click="saveCodes(0)">保存</el-button>
+                <el-button :icon="UploadFilled" type="success" @click="saveCodes(1)">保存并下一步</el-button>
             </el-row>
-        </el-col>
-
-        <!-- 文件预览 -->
-        <el-col :span="codeEditorVisible ? 14 : 0" class="code-editor">
-            <CodeEditor v-show="codeEditorVisible" :key="currentFileId" v-model:code="codes" :lang="lang" @change="handleCodeChange" />
+            <el-row>
+                <FileManagement ref="fileManagementRef" :initial-file-tree="fileTree" :code-id="infoForm.id" style="width: 100%; height: 100%" @file-tree-change="handleFileTreeChange" @file-select="handleFileSelect" />
+            </el-row>
         </el-col>
     </el-row>
 
@@ -888,9 +561,8 @@
 
     .main-content {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         align-items: flex-start;
-        justify-content: space-between;
         box-sizing: border-box;
         height: calc(100vh - 160px);
         min-height: 400px;
@@ -903,7 +575,7 @@
     }
 
     /* 文件树节点样式优化 */
-    :deep(.el-tree) {
+    /* :deep(.el-tree) {
         background: transparent;
 
         .el-tree-node {
@@ -922,9 +594,9 @@
                 background-color: var(--el-color-primary-light-9);
             }
         }
-    }
+    } */
 
-    .custom-tree-node {
+    /* .custom-tree-node {
         display: flex;
         flex: 1;
         align-items: center;
@@ -932,9 +604,9 @@
         padding: 4px 8px;
         font-size: 14px;
         max-width: calc(100% - 24px);
-    }
+    } */
 
-    .file-tree-node-label {
+    /* .file-tree-node-label {
         display: flex;
         align-items: center;
 
@@ -942,7 +614,7 @@
             font-size: 18px;
 
             /* 文件夹图标颜色 */
-            &.folder-icon {
+    /* &.folder-icon {
                 color: #f4b63e;
             }
         }
@@ -950,10 +622,10 @@
         span {
             margin-left: 8px;
         }
-    }
+    } */
 
     /* 操作按钮样式 */
-    .action-buttons {
+    /* .action-buttons {
         display: flex;
         align-items: center;
         opacity: 0;
@@ -969,23 +641,23 @@
                 background-color: var(--el-color-primary-light-8);
             }
         }
-    }
+    } */
 
     /* 鼠标悬停时显示操作按钮 */
-    .el-tree-node__content:hover .action-buttons {
+    /* .el-tree-node__content:hover .action-buttons {
         opacity: 1;
-    }
+    } */
 
     /* 拖拽相关样式优化 */
-    :deep(.el-tree-node.is-drop-inner) {
+    /* :deep(.el-tree-node.is-drop-inner) {
         & > .el-tree-node__content {
             background-color: var(--el-color-primary-light-9);
             border: 1px dashed var(--el-color-primary);
             border-radius: 4px;
         }
-    }
+    } */
 
-    :deep(.el-tree-node__drop-prev),
+    /* :deep(.el-tree-node__drop-prev),
     :deep(.el-tree-node__drop-next) {
         position: relative;
 
@@ -997,13 +669,13 @@
             background-color: var(--el-color-primary);
             content: '';
         }
-    }
+    } */
 
-    :deep(.el-tree-node__drop-prev::before) {
+    /* :deep(.el-tree-node__drop-prev::before) {
         top: -2px;
-    }
+    } */
 
-    :deep(.el-tree-node__drop-next::before) {
+    /* :deep(.el-tree-node__drop-next::before) {
         bottom: -2px;
-    }
+    } */
 </style>
