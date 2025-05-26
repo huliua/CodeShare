@@ -141,3 +141,14 @@ export function genCode(id, templateFields) {
         method: 'post'
     });
 }
+export function downloadCode(id, templateFields) {
+    return request({
+        url: `/codeShare/downloadCode/${id}`,
+        headers: {
+            needToken: true
+        },
+        data: templateFields,
+        responseType: 'blob',
+        method: 'post'
+    });
+}

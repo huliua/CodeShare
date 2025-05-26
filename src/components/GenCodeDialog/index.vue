@@ -25,7 +25,7 @@
     });
 
     // 触发文本内容变更事件
-    const emits = defineEmits(['update:visible', 'submit']);
+    const emits = defineEmits(['update:visible', 'submit', 'download']);
 
     watch(
         () => props.visible,
@@ -51,6 +51,14 @@
             }
         });
     }
+
+    function doDownLoad() {
+        formRef.value.validate(valid => {
+            if (valid) {
+                emits('download', form.value);
+            }
+        });
+    }
 </script>
 
 <template>
@@ -62,6 +70,7 @@
         </el-form>
         <el-row justify="center">
             <el-button type="primary" @click="doSubmit">生成</el-button>
+            <el-button type="success" @click="doDownLoad">下载</el-button>
             <el-button @click="visible = false">取消</el-button>
         </el-row>
     </el-dialog>

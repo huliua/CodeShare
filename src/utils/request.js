@@ -71,7 +71,7 @@ service.interceptors.response.use(
         const msg = errorCode[code] || res.data.msg || errorCode['default'];
         // 二进制数据则直接返回
         if (res.request.responseType === 'blob' || res.request.responseType === 'arraybuffer') {
-            return res.data;
+            return { content: res.data, filename: res.headers['filename'] };
         }
         if (code === 401) {
             // 如果当前不是刷新token请求，且存在刷新token，则需要执行刷新token方法

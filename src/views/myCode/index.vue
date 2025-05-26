@@ -1,6 +1,6 @@
 <script setup>
     import { Refresh, Search, Star, StarFilled, WarnTriangleFilled } from '@element-plus/icons-vue';
-    import { deleteCode, favourCode, genCode, getMyCodesList } from '@/api/codeShare';
+    import { deleteCode, downloadCode, favourCode, genCode, getMyCodesList } from '@/api/codeShare';
     import { useRouter } from 'vue-router';
     import { onActivated } from 'vue';
     import { useDictStore } from '@/store/dictStore.js';
@@ -134,6 +134,19 @@
             showCodeDialogVisible.value = true;
         });
     };
+    const doDownload = function (formVal) {
+        downloadCode(genCodeId.value, formVal).then(res => {
+            const url = window.URL.createObjectURL(res.content);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = res.filename || '代码文件.zip';
+
+            document.body.appendChild(a);
+            a.click(); // 触发点击事件开始下载
+            window.URL.revokeObjectURL(url);
+        });
+    };
 </script>
 
 <template>
@@ -221,7 +234,7 @@
     </el-row>
     <el-empty v-show="dataList.length === 0" description="暂无数据" />
 
-    <GenCodeDialog v-model:visible="genCodeDialogVisible" :info-id="genCodeId" @submit="doGenCode"></GenCodeDialog>
+    <GenCodeDialog v-model:visible="genCodeDialogVisible" :info-id="genCodeId" @submit="doGenCode" @download="doDownload"></GenCodeDialog>
     <ShowCodeDialog v-model:visible="showCodeDialogVisible" :code-files="codeFiles" />
 </template>
 
