@@ -1,88 +1,135 @@
+<script setup>
+    import { getShareInfo, getShareIsValid } from '@/api/share';
+    import SharePasswordDialog from '@/components/SharePasswordDialog/index.vue';
+    import { useRoute, useRouter } from 'vue-router';
+
+    const route = useRoute();
+    const router = useRouter();
+
+    const shareId = route.params.shareId;
+    const shareInfo = ref({});
+    const passwordDialogVisible = ref(false);
+    const loading = ref(true);
+    const errorMsg = ref('');
+
+    onMounted(() => {
+        getShareIsValid(shareId)
+            .then(res => {
+                if (res.data.needPassword) {
+                    passwordDialogVisible.value = true;
+                } else {
+                    goToDetail(res.data);
+                }
+                loading.value = false;
+            })
+            .catch(err => {
+                errorMsg.value = err?.msg || '分享链接已失效或不存在';
+                loading.value = false;
+            });
+    });
+
+    const handleVerify = password => {
+        getShareInfo(shareId, password)
+            .then(res => {
+                passwordDialogVisible.value = false;
+                goToDetail(res.data);
+            })
+            .catch((err) => {
+                ElMessage.error(err?.msg || '密码错误');
+            });
+    };
+
+    const goToDetail = data => {
+        router.push({
+            path: `/detail/${data.codeId}`,
+            query: { shareId: shareId, readonly: true }
+        });
+    };
+</script>
+
 <template>
     <div class="share-page">
-        <template v-if="loading">
-            <div class="loading-wrapper">
-                <el-skeleton :rows="10" animated />
-            </div>
-        </template>
+        <div class="auth-bg">
+            <div class="bg-gradient"></div>
+            <div class="bg-grid"></div>
+        </div>
 
-        <template v-else-if="error">
-            <div class="error-wrapper">
-                <el-empty :description="error" />
+        <div class="share-container">
+            <!-- Loading -->
+            <div v-if="loading" class="share-card">
+                <div class="share-loading">
+                    <el-icon class="is-loading" :size="40" color="var(--cs-accent)"><Loading /></el-icon>
+                    <p>正在验证分享链接...</p>
+                </div>
             </div>
-        </template>
 
-        <!-- 密码验证弹窗 -->
-        <SharePasswordDialog v-model="showPasswordDialog" @verify="getShareCode" />
+            <!-- Error -->
+            <div v-else-if="errorMsg" class="share-card">
+                <el-result icon="warning" :title="errorMsg">
+                    <template #extra>
+                        <el-button type="primary" @click="router.push('/login')">返回首页</el-button>
+                    </template>
+                </el-result>
+            </div>
+        </div>
+
+        <SharePasswordDialog v-model="passwordDialogVisible" @verify="handleVerify" />
     </div>
 </template>
 
-<script setup>
-    import { onMounted, ref } from 'vue';
-    import { useRoute, useRouter } from 'vue-router';
-    import { getShareCodeDetail, getShareInfo } from '@/api/share';
-    import SharePasswordDialog from '@/components/SharePasswordDialog/index.vue';
-
-    const router = useRouter();
-    const route = useRoute();
-    const loading = ref(true);
-    const error = ref('');
-    const showPasswordDialog = ref(false);
-
-    // 检查分享是否有效
-    const checkShare = async () => {
-        loading.value = true;
-        error.value = '';
-
-        try {
-            const res = await getShareInfo(route.params.shareId);
-
-            if (res.data.isExpire === true) {
-                error.value = '分享链接已过期';
-                return false;
-            }
-
-            if (res.data.needPassword === true) {
-                showPasswordDialog.value = true;
-                return false;
-            }
-
-            getShareCode();
-        } catch (err) {
-            error.value = '分享链接无效';
-            return false;
-        } finally {
-            loading.value = false;
-        }
-    };
-
-    // 获取分享的代码
-    const getShareCode = async password => {
-        getShareCodeDetail(route.params.shareId, password).then(res => {
-            if (showPasswordDialog.value) {
-                showPasswordDialog.value = false;
-            }
-            router.push({
-                path: `/share/detail/${res.data.shareCodeId}`,
-                query: {
-                    accessToken: res.data.accessToken
-                }
-            });
-        });
-    };
-
-    onMounted(checkShare);
-</script>
-
 <style scoped>
     .share-page {
-        padding: 20px;
+        position: relative;
         min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .loading-wrapper,
-    .error-wrapper {
-        max-width: 800px;
-        margin: 40px auto;
+    .auth-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+    }
+
+    .bg-gradient {
+        position: absolute;
+        inset: 0;
+        background: var(--cs-auth-gradient);
+    }
+
+    .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(var(--cs-auth-grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--cs-auth-grid-color) 1px, transparent 1px);
+        background-size: 60px 60px;
+        opacity: 0.4;
+    }
+
+    .share-container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .share-card {
+        background: var(--cs-glass-bg);
+        backdrop-filter: var(--cs-glass-blur);
+        -webkit-backdrop-filter: var(--cs-glass-blur);
+        border: 1px solid var(--cs-auth-card-border);
+        border-radius: var(--cs-radius-xl);
+        padding: 40px;
+        min-width: 400px;
+    }
+
+    .share-loading {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .share-loading p {
+        color: var(--cs-text-muted);
+        margin-top: 16px;
     }
 </style>

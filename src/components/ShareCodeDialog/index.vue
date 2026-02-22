@@ -207,7 +207,7 @@
             gap: 32px;
             margin-top: 24px;
             padding: 16px;
-            background: var(--el-fill-color-light);
+            background: var(--cs-surface);
             border-radius: 8px;
 
             .platform-item {

@@ -501,13 +501,28 @@
 </script>
 
 <template>
-    <el-steps :active="activeStep" align-center style="margin: 0 0 18px" :finish-status="'success'">
-        <el-step v-for="(item, index) in allSteps" :key="index" :title="item.title" :icon="item.icon" />
-    </el-steps>
+    <div class="detail-page">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <h2 class="page-title">{{ readOnly ? '查看代码' : '编辑代码' }}</h2>
+                <p class="page-desc">{{ readOnly ? '浏览代码片段详情' : '修改你的代码片段或模板' }}</p>
+            </div>
+            <div v-if="!route.meta.readonly" class="page-header-actions">
+                <el-button v-if="!readOnly" type="danger" @click="confirmVisible = true">删除</el-button>
+                <el-button type="primary" @click="shareDialogVisible = true">分享</el-button>
+            </div>
+        </div>
 
-    <!-- 代码基本信息 -->
-    <el-row v-show="activeStep === 0">
-        <el-col>
+        <!-- Steps -->
+        <div class="steps-wrapper">
+            <el-steps :active="activeStep" align-center :finish-status="'success'">
+                <el-step v-for="(item, index) in allSteps" :key="index" :title="item.title" :icon="item.icon" />
+            </el-steps>
+        </div>
+
+        <!-- Step 1: 基本信息 -->
+        <div v-show="activeStep === 0" class="step-card">
             <el-form ref="infoFormRef" :model="infoForm" :rules="infoFormRules" label-width="100px" :inline="false" :size="'default'" :disabled="readOnly">
                 <el-form-item label="标题" prop="title">
                     <el-input v-model="infoForm.title" autocomplete="off" placeholder="请输入标题" />
@@ -543,41 +558,36 @@
                     </el-input>
                 </el-form-item>
             </el-form>
-            <el-row justify="end">
-                <el-col style="text-align: right">
-                    <el-button v-if="!isBlank(infoForm.id)" type="success" @click="activeStep++">下一步</el-button>
-                    <el-button v-if="!readOnly" :icon="UploadFilled" type="primary" @click="submitForm">保存并下一步</el-button>
-                    <el-button v-if="!readOnly" :icon="RefreshLeft" type="warning" @click="resetForm">重置</el-button>
-                </el-col>
-            </el-row>
-        </el-col>
-    </el-row>
-    <el-row v-show="activeStep === 1" class="main-content">
-        <el-col :span="24" style="margin-bottom: 20px; width: 100%">
-            <el-row>
-                <el-button v-if="!readOnly" color="#626aef" :icon="CirclePlus" @click="callAppendInChild_detail">新增文件/夹</el-button>
-                <el-button type="warning" @click="activeStep--">上一步</el-button>
-                <el-button v-if="!readOnly" :icon="FolderChecked" type="info" @click="saveCodes(0)">保存</el-button>
-                <el-button v-if="!readOnly" :icon="UploadFilled" type="success" @click="saveCodes(1)">保存并下一步</el-button>
-                <el-button :icon="Back" @click="goBack">返回</el-button>
-            </el-row>
-            <el-row>
-                <FileManagement ref="fileManagementRef" :initial-file-tree="fileTree" :read-only="readOnly" :code-id="id" style="width: 100%; height: 100%" @file-tree-change="handleFileTreeChange" @file-select="handleFileSelect" />
-            </el-row>
-        </el-col>
-    </el-row>
+            <div class="step-actions">
+                <el-button v-if="!isBlank(infoForm.id)" type="success" @click="activeStep++">下一步</el-button>
+                <el-button v-if="!readOnly" :icon="UploadFilled" type="primary" @click="submitForm">保存并下一步</el-button>
+                <el-button v-if="!readOnly" :icon="RefreshLeft" @click="resetForm">重置</el-button>
+            </div>
+        </div>
 
-    <el-row v-show="allSteps.length === 3 && activeStep === 2">
-        <el-col :span="24">
-            <el-row>
-                <el-button type="warning" @click="activeStep--">上一步</el-button>
+        <!-- Step 2: 代码文件 -->
+        <div v-show="activeStep === 1" class="step-card file-step">
+            <div class="step-toolbar">
+                <el-button v-if="!readOnly" type="primary" :icon="CirclePlus" @click="callAppendInChild_detail">新增文件/夹</el-button>
+                <el-button @click="activeStep--">上一步</el-button>
+                <el-button v-if="!readOnly" :icon="FolderChecked" @click="saveCodes(0)">保存</el-button>
+                <el-button v-if="!readOnly" type="success" :icon="UploadFilled" @click="saveCodes(1)">保存并下一步</el-button>
+                <el-button :icon="Back" @click="goBack">返回</el-button>
+            </div>
+            <div class="file-area">
+                <FileManagement ref="fileManagementRef" :initial-file-tree="fileTree" :read-only="readOnly" :code-id="id" style="width: 100%; height: 100%" @file-tree-change="handleFileTreeChange" @file-select="handleFileSelect" />
+            </div>
+        </div>
+
+        <!-- Step 3: 模板设置 -->
+        <div v-show="allSteps.length === 3 && activeStep === 2" class="step-card">
+            <div class="step-toolbar">
+                <el-button @click="activeStep--">上一步</el-button>
                 <el-button v-if="!readOnly" type="primary" @click="autoGenTemplate">生成模版字段</el-button>
-                <el-button v-if="!readOnly" :icon="FolderChecked" type="info" @click="saveTemplate(0)">保存</el-button>
+                <el-button v-if="!readOnly" :icon="FolderChecked" @click="saveTemplate(0)">保存</el-button>
                 <el-button v-if="!readOnly" :icon="UploadFilled" type="success" @click="saveTemplate(1)">保存并下一步</el-button>
                 <el-button v-else type="success" @click="activeStep++">下一步</el-button>
-            </el-row>
-        </el-col>
-        <el-col :span="24">
+            </div>
             <el-row v-show="templateFields.length > 0" wrap style="width: 100%" :gutter="20">
                 <el-col v-for="item in templateFields" :key="item.name" :span="12" style="margin-top: 20px">
                     <el-card>
@@ -616,80 +626,133 @@
                 </el-col>
             </el-row>
             <el-empty v-show="templateFields.length === 0" description="暂无数据" />
-        </el-col>
-    </el-row>
+        </div>
 
-    <el-row v-show="allSteps.length === activeStep">
-        <el-col :span="24">
+        <!-- Complete -->
+        <div v-show="allSteps.length === activeStep" class="step-card">
             <el-result icon="success" :title="readOnly ? '查看完成' : '保存完成'">
                 <template #extra>
-                    <el-button type="warning" @click="activeStep--">上一步</el-button>
+                    <el-button @click="activeStep--">上一步</el-button>
                     <el-button type="primary" @click="goBack">完成</el-button>
                 </template>
             </el-result>
-        </el-col>
-    </el-row>
+        </div>
 
-    <!-- 添加文件/文件夹弹窗 -->
-    <el-dialog v-model="dialogFormVisible" :title="dialogFormTitle" width="500">
-        <el-form ref="formRef" :model="form" :rules="rules" label-position="left">
-            <el-form-item label="文件名" label-width="100px" prop="name">
-                <el-input v-model="form.name" autocomplete="off" @keydown.enter.prevent="save" />
-            </el-form-item>
-            <el-form-item label="文件类型" label-width="100px" prop="type">
-                <el-select v-model="form.type" placeholder="请选择文件类型">
-                    <el-option label="文件" value="file" />
-                    <el-option label="文件夹" value="folder" />
-                </el-select>
-            </el-form-item>
-        </el-form>
-        <template #footer>
-            <div class="dialog-footer">
-                <el-button @click="dialogFormVisible = false">取消</el-button>
-                <el-button type="primary" @click="save">确定</el-button>
-            </div>
-        </template>
-    </el-dialog>
+        <!-- Dialogs -->
+        <el-dialog v-model="dialogFormVisible" :title="dialogFormTitle" width="500">
+            <el-form ref="formRef" :model="form" :rules="rules" label-position="left">
+                <el-form-item label="文件名" label-width="100px" prop="name">
+                    <el-input v-model="form.name" autocomplete="off" @keydown.enter.prevent="save" />
+                </el-form-item>
+                <el-form-item label="文件类型" label-width="100px" prop="type">
+                    <el-select v-model="form.type" placeholder="请选择文件类型">
+                        <el-option label="文件" value="file" />
+                        <el-option label="文件夹" value="folder" />
+                    </el-select>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="dialogFormVisible = false">取消</el-button>
+                    <el-button type="primary" @click="save">确定</el-button>
+                </div>
+            </template>
+        </el-dialog>
 
-    <el-dialog v-model="confirmVisible" title="提示" width="500" draggable>
-        <span>此操作不可撤销，确定要删除吗？</span>
-        <template #footer>
-            <div class="dialog-footer">
-                <el-button @click="confirmVisible = false">取消</el-button>
-                <el-button type="danger" @click="doDelete">确定</el-button>
-            </div>
-        </template>
-    </el-dialog>
+        <el-dialog v-model="confirmVisible" title="提示" width="500" draggable>
+            <span>此操作不可撤销，确定要删除吗？</span>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="confirmVisible = false">取消</el-button>
+                    <el-button type="danger" @click="doDelete">确定</el-button>
+                </div>
+            </template>
+        </el-dialog>
 
-    <div class="detail-container">
-        <!-- 添加分享对话框组件 -->
         <ShareCodeDialog v-if="!route.meta.readonly" v-model="shareDialogVisible" :code-id="id" />
     </div>
 </template>
 
 <style scoped lang="scss">
+    .detail-page {
+        padding-bottom: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .page-title {
+        font-family: var(--cs-font-heading);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--cs-text);
+        margin: 0 0 4px;
+    }
+
+    .page-desc {
+        color: var(--cs-text-muted);
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .page-header-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .steps-wrapper {
+        background: var(--cs-surface);
+        border: 1px solid var(--cs-border);
+        border-radius: var(--cs-radius-lg);
+        padding: 20px 24px;
+        margin-bottom: 20px;
+    }
+
+    .step-card {
+        background: var(--cs-surface);
+        border: 1px solid var(--cs-border);
+        border-radius: var(--cs-radius-lg);
+        padding: 24px;
+    }
+
+    .step-card.file-step {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 280px);
+        min-height: 400px;
+    }
+
+    .step-toolbar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-shrink: 0;
+    }
+
+    .step-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .file-area {
+        flex: 1;
+        overflow: hidden;
+    }
+
     .delete-circle-icon {
         width: 18px;
         height: 18px;
     }
-    .main-content {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        box-sizing: border-box;
-        height: calc(100vh - 242px);
-        min-height: 400px;
-        padding: 20px;
-    }
 
-    .file-tree,
-    .code-editor {
-        height: calc(100% - 52px);
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 16px;
+    .edit-circle-icon {
+        width: 18px;
+        height: 18px;
     }
 </style>

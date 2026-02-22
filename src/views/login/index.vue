@@ -96,101 +96,227 @@
     const register = ref(true);
 </script>
 <template>
-    <div class="page-container">
-        <div class="login">
-            <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-form">
-                <h3 class="title">{{ appName }}</h3>
-                <el-form-item prop="username">
-                    <el-input v-model="loginForm.username" type="text" size="large" auto-complete="off" placeholder="账号">
-                        <template #prefix>
-                            <el-icon>
-                                <User />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item prop="password">
-                    <el-input v-model="loginForm.password" type="password" size="large" auto-complete="off" placeholder="密码" show-password @keyup.enter="handleLogin">
-                        <template #prefix>
-                            <el-icon>
-                                <Lock />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-checkbox v-model="loginForm.rememberMe" style="margin: 0px 0px 25px 0px">7天免登录</el-checkbox>
-                <el-form-item style="width: 100%">
-                    <el-button :loading="loading" size="large" type="primary" style="width: 100%" @click.prevent="handleLogin">
-                        <span v-if="!loading">登 录</span>
-                        <span v-else>登 录 中...</span>
-                    </el-button>
-                    <div style="text-align: right; width: 100%" v-if="register">
-                        <router-link class="link-type" :to="'/register'">注册账号</router-link>
-                    </div>
-                </el-form-item>
-            </el-form>
+    <div class="auth-page">
+        <!-- Background decoration -->
+        <div class="auth-bg">
+            <div class="bg-gradient"></div>
+            <div class="bg-grid"></div>
+            <div class="bg-glow bg-glow-1"></div>
+            <div class="bg-glow bg-glow-2"></div>
         </div>
-        <!--  底部  -->
-        <el-footer>
-            <el-row class="footer" @click="router.push('/index')">
-                <el-col :span="24">Copyright © {{ new Date().getFullYear() }} {{ appName }}. All Rights Reserved.</el-col>
-            </el-row>
-        </el-footer>
+
+        <!-- Login Card -->
+        <div class="auth-container">
+            <div class="auth-card">
+                <!-- Brand -->
+                <div class="auth-brand">
+                    <span class="brand-icon">&lt;/&gt;</span>
+                    <h1 class="brand-title">{{ appName }}</h1>
+                    <p class="brand-subtitle">分享你的代码，连接开发者世界</p>
+                </div>
+
+                <!-- Form -->
+                <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="auth-form">
+                    <el-form-item prop="username">
+                        <el-input v-model="loginForm.username" type="text" size="large" auto-complete="off" placeholder="账号">
+                            <template #prefix>
+                                <el-icon><User /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="password">
+                        <el-input v-model="loginForm.password" type="password" size="large" auto-complete="off" placeholder="密码" show-password @keyup.enter="handleLogin">
+                            <template #prefix>
+                                <el-icon><Lock /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+
+                    <div class="form-options">
+                        <el-checkbox v-model="loginForm.rememberMe">7天免登录</el-checkbox>
+                    </div>
+
+                    <el-form-item>
+                        <el-button :loading="loading" size="large" type="primary" class="login-btn" @click.prevent="handleLogin">
+                            <span v-if="!loading">登 录</span>
+                            <span v-else>登 录 中...</span>
+                        </el-button>
+                    </el-form-item>
+
+                    <div v-if="register" class="auth-footer-link">
+                        <span>还没有账号？</span>
+                        <router-link to="/register">立即注册</router-link>
+                    </div>
+                </el-form>
+            </div>
+        </div>
+
+        <!-- Page Footer -->
+        <footer class="page-footer">
+            Copyright © {{ new Date().getFullYear() }} {{ appName }}. All Rights Reserved.
+        </footer>
     </div>
 </template>
 
-<style scoped lang="scss">
-    .page-container {
-        background-image: url('../../assets/images/login-background.jpg');
-        background-size: cover;
-        height: 100vh;
-        overflow: scroll;
+<style scoped>
+    .auth-page {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
 
-    .login {
+    /* Background */
+    .auth-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+    }
+
+    .bg-gradient {
+        position: absolute;
+        inset: 0;
+        background: var(--cs-auth-gradient);
+    }
+
+    .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(var(--cs-auth-grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--cs-auth-grid-color) 1px, transparent 1px);
+        background-size: 60px 60px;
+        opacity: 0.4;
+    }
+
+    .bg-glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 1;
+    }
+
+    .bg-glow-1 {
+        top: -20%;
+        right: -10%;
+        width: 600px;
+        height: 600px;
+        background: var(--cs-auth-glow-1);
+    }
+
+    .bg-glow-2 {
+        bottom: -20%;
+        left: -10%;
+        width: 500px;
+        height: 500px;
+        background: var(--cs-auth-glow-2);
+    }
+
+    /* Auth Container */
+    .auth-container {
+        flex: 1;
         display: flex;
         align-items: center;
-        min-height: calc(100vh - 60px);
         justify-content: center;
+        position: relative;
+        z-index: 1;
+        padding: 40px 20px;
     }
 
-    .title {
-        margin: 0px auto 30px auto;
-        color: #707070;
-        text-align: center;
-    }
-
-    .login-form {
-        width: 400px;
-        padding: 25px 25px 5px 25px;
-        background: #ffffff;
-        border-radius: 6px;
-
-        .el-input {
-            height: 40px;
-
-            input {
-                height: 40px;
-            }
-        }
-
-        .input-icon {
-            width: 14px;
-            height: 39px;
-            margin-left: 0px;
-        }
-    }
-
-    .el-login-footer {
-        position: fixed;
-        bottom: 0;
+    .auth-card {
         width: 100%;
-        height: 40px;
-        color: #fff;
-        font-size: 12px;
-        font-family: Arial;
-        line-height: 40px;
-        letter-spacing: 1px;
+        max-width: 420px;
+        padding: 40px 36px;
+        background: var(--cs-glass-bg);
+        backdrop-filter: var(--cs-glass-blur);
+        -webkit-backdrop-filter: var(--cs-glass-blur);
+        border: 1px solid var(--cs-auth-card-border);
+        border-radius: var(--cs-radius-xl);
+        box-shadow: var(--cs-shadow-lg);
+    }
+
+    /* Brand */
+    .auth-brand {
         text-align: center;
+        margin-bottom: 36px;
+    }
+
+    .brand-icon {
+        display: inline-block;
+        font-family: var(--cs-font-heading);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--cs-accent);
+        background: rgba(34, 197, 94, 0.1);
+        padding: 10px 16px;
+        border-radius: var(--cs-radius-md);
+        margin-bottom: 16px;
+    }
+
+    .brand-title {
+        font-family: var(--cs-font-heading);
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--cs-text);
+        margin: 0 0 8px;
+        letter-spacing: -0.5px;
+    }
+
+    .brand-subtitle {
+        color: var(--cs-text-muted);
+        font-size: 14px;
+        margin: 0;
+    }
+
+    /* Form */
+    .auth-form {
+        width: 100%;
+    }
+
+    .form-options {
+        margin-bottom: 20px;
+    }
+
+    .login-btn {
+        width: 100%;
+        height: 44px !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        letter-spacing: 2px;
+    }
+
+    .auth-footer-link {
+        text-align: center;
+        margin-top: 16px;
+        font-size: 14px;
+        color: var(--cs-text-muted);
+    }
+
+    .auth-footer-link a {
+        color: var(--cs-accent);
+        font-weight: 500;
+        margin-left: 4px;
+    }
+
+    .auth-footer-link a:hover {
+        text-decoration: underline;
+    }
+
+    /* Page Footer */
+    .page-footer {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        padding: 20px;
+        color: var(--cs-text-muted);
+        font-size: 12px;
+        letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 480px) {
+        .auth-card {
+            padding: 32px 20px;
+        }
     }
 </style>

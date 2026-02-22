@@ -1,150 +1,192 @@
 <script setup>
+    import { ChatLineSquare, Edit, Monitor, Phone, Promotion, User, MessageBox } from '@element-plus/icons-vue';
     import { useUserStore } from '@/store/userStore';
-    import { changePassword, updateUserInfo } from '@/api/user.js';
-    import { encryptByRsa } from '@/utils/commonUtils';
+    import { changePassword, getUserInfo, updateUserInfo } from '@/api/user';
 
-    const publicKey = ref(import.meta.env.VITE_APP_PUBLIC_KEY);
-
+    // 获取用户信息
     const userStore = useUserStore();
-    const userInfoForm = ref({
-        username: userStore.userInfo?.username,
-        nickname: userStore.userInfo?.nickname,
-        phone: userStore.userInfo?.phone,
-        sex: userStore.userInfo?.sex,
-        email: userStore.userInfo?.email,
-        signature: userStore.userInfo?.signature
-    });
-    const userInfoFormRef = ref(null);
-    const changePasswordForm = ref({
+    const userInfoRef = ref(null);
+    const changePwdFormRef = ref(null);
+
+    const userInfo = ref({});
+    const changePasswordInfo = ref({
         oldPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
-    const changePasswordFormRef = ref(null);
-    const changePasswordFormRules = ref({
-        oldPassword: [{ required: true, message: '请输入原密码', trigger: 'blur' }],
+
+    const userInfoForm = ref({
+        username: '',
+        nickname: '',
+        phone: '',
+        sex: '',
+        email: '',
+        signature: ''
+    });
+
+    const userInfoRules = reactive({
+        nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
+        phone: [{ required: true, message: '请输入手机号', trigger: 'blur' }],
+        sex: [{ required: true, message: '请输入性别', trigger: 'blur' }]
+    });
+
+    const changePwdRules = reactive({
+        oldPassword: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
         newPassword: [
             { required: true, message: '请输入新密码', trigger: 'blur' },
-            { min: 6, max: 20, message: '密码长度为6-20', trigger: 'blur' }
+            { min: 6, max: 20, message: '密码长度为6-20字符', trigger: 'blur' }
         ],
         confirmPassword: [
-            { required: true, message: '请再次输入新密码', trigger: 'blur' },
+            { required: true, message: '请确认新密码', trigger: 'blur' },
             {
-                validator: function (rule, value, callback) {
-                    if (value !== changePasswordForm.value.newPassword) {
-                        return callback(new Error('两次输入的密码不一致'));
+                validator: (rule, value, callback) => {
+                    if (value !== changePasswordInfo.value.newPassword) {
+                        callback(new Error('两次输入的密码不一致'));
                     } else {
-                        return callback();
+                        callback();
                     }
-                }
+                },
+                trigger: 'blur'
             }
         ]
     });
-    const phoneValidator = function (rule, value, callback) {
-        const phoneRegex = /^1[3-9]\d{9}$/;
-        if (!value) {
-            return callback(new Error('请输入手机号'));
-        } else if (!phoneRegex.test(value)) {
-            return callback(new Error('请输入有效的手机号'));
-        } else {
-            return callback();
-        }
-    };
-    const userInfoFormRules = ref({
-        nickname: [
-            { required: true, message: '请输入昵称', trigger: 'blur' },
-            { min: 1, max: 50, message: '昵称长度为1-25', trigger: 'blur' }
-        ],
-        phone: [
-            { required: true, message: '请输入手机号', trigger: 'blur' },
-            { validator: phoneValidator, trigger: 'blur' }
-        ],
-        email: [{ type: 'email', message: '请输入合法的邮箱地址', trigger: 'blur' }]
+
+    onMounted(() => {
+        getUserInfo().then(res => {
+            userInfo.value = res.data;
+            userInfoForm.value = {
+                username: res.data.username,
+                nickname: res.data.nickname,
+                phone: res.data.phone,
+                sex: res.data.sex,
+                email: res.data.email,
+                signature: res.data.signature
+            };
+        });
     });
 
-    const doUpdateUserInfo = () => {
-        userInfoFormRef.value.validate(valid => {
-            if (!valid) {
-                return false;
+    const submitUserInfo = () => {
+        userInfoRef.value.validate(valid => {
+            if (valid) {
+                updateUserInfo(userInfoForm.value).then(res => {
+                    ElMessage.success('修改成功');
+                    userStore.updateUserInfo(userInfoForm.value);
+                });
             }
-            updateUserInfo(userInfoForm.value).then(res => {
-                ElMessage.success('修改成功');
-                const newUserInfo = res.data;
-                userStore.updateUser(newUserInfo);
-            });
         });
     };
 
-    const doChangePassword = () => {
-        changePasswordFormRef.value.validate(valid => {
-            if (!valid) {
-                return false;
+    const submitChangePwd = () => {
+        changePwdFormRef.value.validate(valid => {
+            if (valid) {
+                changePassword(changePasswordInfo.value).then(res => {
+                    ElMessage.success('修改密码成功');
+                    changePasswordInfo.value = { oldPassword: '', newPassword: '', confirmPassword: '' };
+                });
             }
-            const changePasswordData = Object.assign({}, changePasswordForm.value);
-            changePasswordData.oldPassword = encryptByRsa(changePasswordData.oldPassword, atob(publicKey.value));
-            changePasswordData.newPassword = encryptByRsa(changePasswordData.newPassword, atob(publicKey.value));
-            changePasswordData.confirmPassword = encryptByRsa(changePasswordData.confirmPassword, atob(publicKey.value));
-            changePassword(changePasswordData).then(res => {
-                ElMessage.success('修改成功');
-            });
         });
     };
 </script>
+
 <template>
-    <el-tabs type="border-card">
-        <el-tab-pane label="基本信息">
-            <el-row>
-                <el-col :span="12">
-                    <el-form ref="userInfoFormRef" style="max-width: 600px" :model="userInfoForm" :rules="userInfoFormRules" label-width="auto">
-                        <el-form-item label="用户名" prop="username">
-                            <el-input :disabled="true" v-model="userInfoForm.username" />
+    <div class="user-page">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2 class="page-title">个人中心</h2>
+            <p class="page-desc">管理你的账户信息和安全设置</p>
+        </div>
+
+        <el-tabs type="border-card" class="user-tabs">
+            <el-tab-pane label="基本信息">
+                <template #label>
+                    <span class="tab-label"><el-icon><User /></el-icon> 基本信息</span>
+                </template>
+                <div class="tab-content">
+                    <el-form ref="userInfoRef" :model="userInfoForm" :rules="userInfoRules" label-width="80px">
+                        <el-form-item label="用户名">
+                            <el-input v-model="userInfoForm.username" disabled />
                         </el-form-item>
                         <el-form-item label="昵称" prop="nickname">
-                            <el-input v-model="userInfoForm.nickname" clearable />
+                            <el-input v-model="userInfoForm.nickname" />
+                        </el-form-item>
+                        <el-form-item label="手机号" prop="phone">
+                            <el-input v-model="userInfoForm.phone" />
                         </el-form-item>
                         <el-form-item label="性别" prop="sex">
-                            <el-select v-model="userInfoForm.sex" placeholder="请选择性别" clearable>
+                            <el-select v-model="userInfoForm.sex" placeholder="请选择">
                                 <el-option label="男" value="1" />
                                 <el-option label="女" value="0" />
                             </el-select>
                         </el-form-item>
-                        <el-form-item label="手机" prop="phone">
-                            <el-input v-model="userInfoForm.phone" clearable />
+                        <el-form-item label="邮箱">
+                            <el-input v-model="userInfoForm.email" />
                         </el-form-item>
-                        <el-form-item label="邮箱" prop="email">
-                            <el-input v-model="userInfoForm.email" clearable />
+                        <el-form-item label="个性签名">
+                            <el-input v-model="userInfoForm.signature" type="textarea" />
                         </el-form-item>
-                        <el-form-item label="个性签名" prop="signature">
-                            <el-input v-model="userInfoForm.signature" type="textarea" clearable />
+                        <el-form-item>
+                            <el-button type="primary" @click="submitUserInfo">保存修改</el-button>
                         </el-form-item>
                     </el-form>
-                </el-col>
-            </el-row>
-            <el-row :justify="'center'">
-                <el-button type="primary" @click="doUpdateUserInfo">保存</el-button>
-            </el-row>
-        </el-tab-pane>
-        <el-tab-pane label="安全设置">
-            <el-row>
-                <el-col :span="12">
-                    <el-form ref="changePasswordFormRef" style="max-width: 600px" :model="changePasswordForm" :rules="changePasswordFormRules" label-width="auto">
-                        <el-form-item label="原密码" prop="oldPassword">
-                            <el-input type="password" v-model="changePasswordForm.oldPassword" show-password />
+                </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="安全设置">
+                <template #label>
+                    <span class="tab-label"><el-icon><Monitor /></el-icon> 安全设置</span>
+                </template>
+                <div class="tab-content">
+                    <el-form ref="changePwdFormRef" :model="changePasswordInfo" :rules="changePwdRules" label-width="80px">
+                        <el-form-item label="旧密码" prop="oldPassword">
+                            <el-input v-model="changePasswordInfo.oldPassword" type="password" show-password />
                         </el-form-item>
                         <el-form-item label="新密码" prop="newPassword">
-                            <el-input type="password" v-model="changePasswordForm.newPassword" show-password />
+                            <el-input v-model="changePasswordInfo.newPassword" type="password" show-password />
                         </el-form-item>
                         <el-form-item label="确认密码" prop="confirmPassword">
-                            <el-input type="password" v-model="changePasswordForm.confirmPassword" show-password />
+                            <el-input v-model="changePasswordInfo.confirmPassword" type="password" show-password />
+                        </el-form-item>
+                        <el-form-item>
+                            <el-button type="primary" @click="submitChangePwd">修改密码</el-button>
                         </el-form-item>
                     </el-form>
-                </el-col>
-            </el-row>
-            <el-row :justify="'center'">
-                <el-button type="primary" @click="doChangePassword">修改密码</el-button>
-            </el-row>
-        </el-tab-pane>
-    </el-tabs>
+                </div>
+            </el-tab-pane>
+        </el-tabs>
+    </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+    .user-page {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-family: var(--cs-font-heading);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--cs-text);
+        margin: 0 0 4px;
+    }
+
+    .page-desc {
+        color: var(--cs-text-muted);
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .tab-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .tab-content {
+        padding: 24px 16px;
+    }
+</style>

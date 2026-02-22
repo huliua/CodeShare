@@ -594,20 +594,21 @@
         z-index: 3000;
         margin: 0;
         padding: 5px 0;
-        color: #333;
+        color: var(--cs-text);
         font-weight: 400;
         font-size: 12px;
         list-style-type: none;
-        background: #fff;
-        border-radius: 4px;
-        box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, 0.3);
+        background: var(--cs-surface);
+        border: 1px solid var(--cs-border);
+        border-radius: var(--cs-radius-md);
+        box-shadow: var(--cs-shadow-lg);
 
         li {
             margin: 0;
             padding: 7px 16px;
             cursor: pointer;
             &:hover {
-                background: #eee;
+                background: var(--cs-surface-hover);
             }
         }
     }

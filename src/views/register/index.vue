@@ -91,147 +91,268 @@
     };
 </script>
 <template>
-    <div class="page-container">
-        <div class="register">
-            <el-form ref="registerRef" :model="registerForm" :rules="registerRules" class="register-form" label-width="80px">
-                <h3 class="title">{{ appName }}</h3>
-                <el-form-item prop="username" label="用户名">
-                    <el-input v-model="registerForm.username" type="text" size="large" auto-complete="off" placeholder="请输入用户名">
-                        <template #prefix>
-                            <el-icon>
-                                <User />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item prop="nickname" label="昵称">
-                    <el-input v-model="registerForm.nickname" size="large" auto-complete="off" clearable placeholder="请输入昵称">
-                        <template #prefix>
-                            <el-icon>
-                                <Suitcase />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item prop="password" label="密码">
-                    <el-input v-model="registerForm.password" type="password" size="large" clearable auto-complete="new-password" placeholder="密码" show-password>
-                        <template #prefix>
-                            <el-icon>
-                                <Lock />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item prop="confirmPassword" label="确认密码">
-                    <el-input v-model="registerForm.confirmPassword" type="password" size="large" clearable auto-complete="new-password" placeholder="确认密码" show-password>
-                        <template #prefix>
-                            <el-icon>
-                                <Lock />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item prop="sex" label="性别">
-                    <el-select v-model="registerForm.sex" size="large" placeholder="请选择性别" clearable>
-                        <el-option label="男" value="1" />
-                        <el-option label="女" value="0" />
-                        <template #prefix>
-                            <el-icon>
-                                <Female />
-                            </el-icon>
-                        </template>
-                    </el-select>
-                </el-form-item>
-                <el-form-item prop="phone" label="手机">
-                    <el-input v-model="registerForm.phone" size="large" placeholder="请输入手机号" clearable>
-                        <template #prefix>
-                            <el-icon>
-                                <Phone />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item prop="email" label="邮箱">
-                    <el-input v-model="registerForm.email" size="large" placeholder="请输入邮箱地址" clearable>
-                        <template #prefix>
-                            <el-icon>
-                                <Link />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item prop="signature" label="个性签名">
-                    <el-input v-model="registerForm.signature" size="large" placeholder="请输入个性签名" type="textarea" clearable>
-                        <template #prefix>
-                            <el-icon>
-                                <Collection />
-                            </el-icon>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-row style="margin-bottom: 10px" justify="center" align="middle">
-                    <el-col :span="5" :offset="9" style="text-align: center">
-                        <el-button :loading="isLoading" size="large" type="primary" @click.prevent="handleRegister">
+    <div class="auth-page">
+        <!-- Background decoration -->
+        <div class="auth-bg">
+            <div class="bg-gradient"></div>
+            <div class="bg-grid"></div>
+            <div class="bg-glow bg-glow-1"></div>
+            <div class="bg-glow bg-glow-2"></div>
+        </div>
+
+        <!-- Register Card -->
+        <div class="auth-container">
+            <div class="auth-card">
+                <!-- Brand -->
+                <div class="auth-brand">
+                    <span class="brand-icon">&lt;/&gt;</span>
+                    <h1 class="brand-title">{{ appName }}</h1>
+                    <p class="brand-subtitle">创建账号，开始分享代码</p>
+                </div>
+
+                <!-- Form -->
+                <el-form ref="registerRef" :model="registerForm" :rules="registerRules" class="auth-form" label-width="80px">
+                    <el-form-item prop="username" label="用户名">
+                        <el-input v-model="registerForm.username" type="text" size="large" auto-complete="off" placeholder="请输入用户名">
+                            <template #prefix>
+                                <el-icon><User /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="nickname" label="昵称">
+                        <el-input v-model="registerForm.nickname" size="large" auto-complete="off" clearable placeholder="请输入昵称">
+                            <template #prefix>
+                                <el-icon><Suitcase /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="password" label="密码">
+                        <el-input v-model="registerForm.password" type="password" size="large" clearable auto-complete="new-password" placeholder="密码" show-password>
+                            <template #prefix>
+                                <el-icon><Lock /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="confirmPassword" label="确认密码">
+                        <el-input v-model="registerForm.confirmPassword" type="password" size="large" clearable auto-complete="new-password" placeholder="确认密码" show-password>
+                            <template #prefix>
+                                <el-icon><Lock /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="sex" label="性别">
+                        <el-select v-model="registerForm.sex" size="large" placeholder="请选择性别" clearable>
+                            <el-option label="男" value="1" />
+                            <el-option label="女" value="0" />
+                            <template #prefix>
+                                <el-icon><Female /></el-icon>
+                            </template>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item prop="phone" label="手机">
+                        <el-input v-model="registerForm.phone" size="large" placeholder="请输入手机号" clearable>
+                            <template #prefix>
+                                <el-icon><Phone /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="email" label="邮箱">
+                        <el-input v-model="registerForm.email" size="large" placeholder="请输入邮箱地址" clearable>
+                            <template #prefix>
+                                <el-icon><Link /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+                    <el-form-item prop="signature" label="个性签名">
+                        <el-input v-model="registerForm.signature" size="large" placeholder="请输入个性签名" type="textarea" clearable>
+                            <template #prefix>
+                                <el-icon><Collection /></el-icon>
+                            </template>
+                        </el-input>
+                    </el-form-item>
+
+                    <div class="form-actions">
+                        <el-button :loading="isLoading" size="large" type="primary" class="register-btn" @click.prevent="handleRegister">
                             <span v-if="!isLoading">注 册</span>
                             <span v-else>提交中...</span>
                         </el-button>
-                    </el-col>
-                    <el-col :span="9">
-                        <el-button type="text" style="float: left" @click="router.push('/login')">
-                            <span style="color: #409eff">已有账号？去登录</span>
-                        </el-button>
-                    </el-col>
-                </el-row>
-            </el-form>
+                    </div>
+
+                    <div class="auth-footer-link">
+                        <span>已有账号？</span>
+                        <a href="javascript:void(0)" @click="router.push('/login')">去登录</a>
+                    </div>
+                </el-form>
+            </div>
         </div>
-        <!--  底部  -->
-        <el-footer>
-            <el-row class="footer" @click="router.push('/index')">
-                <el-col :span="24">Copyright © {{ new Date().getFullYear() }} {{ appName }}. All Rights Reserved.</el-col>
-            </el-row>
-        </el-footer>
+
+        <!-- Page Footer -->
+        <footer class="page-footer">
+            Copyright © {{ new Date().getFullYear() }} {{ appName }}. All Rights Reserved.
+        </footer>
     </div>
 </template>
 
-<style lang="css" scoped>
-    .page-container {
-        height: 100vh;
-        overflow: scroll;
-        background-image: url('../../assets/images/login-background.jpg');
-        background-size: cover;
+<style scoped>
+    .auth-page {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
     }
 
-    .register {
+    /* Background */
+    .auth-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+    }
+
+    .bg-gradient {
+        position: absolute;
+        inset: 0;
+        background: var(--cs-auth-gradient);
+    }
+
+    .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+            linear-gradient(var(--cs-auth-grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--cs-auth-grid-color) 1px, transparent 1px);
+        background-size: 60px 60px;
+        opacity: 0.4;
+    }
+
+    .bg-glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(100px);
+        opacity: 0.15;
+    }
+
+    .bg-glow-1 {
+        top: -20%;
+        right: -10%;
+        width: 600px;
+        height: 600px;
+        background: var(--cs-accent);
+    }
+
+    .bg-glow-2 {
+        bottom: -20%;
+        left: -10%;
+        width: 500px;
+        height: 500px;
+        background: #3B82F6;
+    }
+
+    /* Auth Container */
+    .auth-container {
+        flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: calc(100vh - 60px);
+        position: relative;
+        z-index: 1;
+        padding: 40px 20px;
     }
 
-    .title {
-        margin: 0 auto 30px auto;
-        color: #707070;
+    .auth-card {
+        width: 100%;
+        max-width: 520px;
+        padding: 40px 36px;
+        background: var(--cs-glass-bg);
+        backdrop-filter: var(--cs-glass-blur);
+        -webkit-backdrop-filter: var(--cs-glass-blur);
+        border: 1px solid var(--cs-auth-card-border);
+        border-radius: var(--cs-radius-xl);
+        box-shadow: var(--cs-shadow-lg);
+    }
+
+    /* Brand */
+    .auth-brand {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .brand-icon {
+        display: inline-block;
+        font-family: var(--cs-font-heading);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--cs-accent);
+        background: rgba(34, 197, 94, 0.1);
+        padding: 10px 16px;
+        border-radius: var(--cs-radius-md);
+        margin-bottom: 16px;
+    }
+
+    .brand-title {
+        font-family: var(--cs-font-heading);
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--cs-text);
+        margin: 0 0 8px;
+        letter-spacing: -0.5px;
+    }
+
+    .brand-subtitle {
+        color: var(--cs-text-muted);
+        font-size: 14px;
+        margin: 0;
+    }
+
+    /* Form */
+    .auth-form {
+        width: 100%;
+    }
+
+    .form-actions {
+        margin-top: 24px;
         text-align: center;
     }
 
-    .register-form {
-        width: 500px;
-        padding: 25px 25px 5px 25px;
-        background: #ffffff;
-        border-radius: 6px;
+    .register-btn {
+        width: 100%;
+        height: 44px !important;
+        font-size: 15px !important;
+        font-weight: 600 !important;
+        letter-spacing: 2px;
+    }
 
-        .el-input {
-            height: 40px;
+    .auth-footer-link {
+        text-align: center;
+        margin-top: 16px;
+        font-size: 14px;
+        color: var(--cs-text-muted);
+    }
 
-            input {
-                height: 40px;
-            }
-        }
+    .auth-footer-link a {
+        color: var(--cs-accent);
+        font-weight: 500;
+        margin-left: 4px;
+    }
 
-        .input-icon {
-            width: 14px;
-            height: 39px;
-            margin-left: 0;
+    .auth-footer-link a:hover {
+        text-decoration: underline;
+    }
+
+    /* Page Footer */
+    .page-footer {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        padding: 20px;
+        color: var(--cs-text-muted);
+        font-size: 12px;
+        letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 480px) {
+        .auth-card {
+            padding: 32px 16px;
         }
     }
 </style>
